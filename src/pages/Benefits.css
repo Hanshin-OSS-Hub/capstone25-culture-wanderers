@@ -1,0 +1,133 @@
+.benefits-page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+.benefits-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.benefits-kicker {
+  font-size: 13px;
+  color: #ff2f78;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.benefits-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.benefits-sub {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* 필터 바 */
+.benefits-filter-bar {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  padding: 16px 20px;
+  border-radius: 18px;
+  background: #ffeef5;
+  margin-bottom: 20px;
+}
+
+.benefits-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.benefits-filter-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.benefits-select {
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid #f9cadf;
+  background: #fff;
+  font-size: 13px;
+}
+
+.benefits-checkbox {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+/* 카드 리스트 */
+.benefits-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.benefit-card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 18px 20px 20px;
+  box-shadow: 0 10px 30px rgba(255, 111, 166, 0.12);
+}
+
+.benefit-chip-row {
+  margin-bottom: 6px;
+}
+
+.benefit-chip {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: #fff3f7;
+  color: #ff2f78;
+  font-weight: 600;
+}
+
+.benefit-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #111827;
+}
+
+.benefit-target {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.benefit-desc {
+  font-size: 13px;
+  color: #4b5563;
+  margin-bottom: 6px;
+}
+
+.benefit-note {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-bottom: 10px;
+}
+
+.benefit-button {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(90deg, #ff6fa6, #ff3f7f);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
