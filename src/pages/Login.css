@@ -1,62 +1,64 @@
-/* 페이지 전체를 가운데 정렬 컨테이너로 */
+/* 전체 페이지 정렬 */
 
 .login-page {
-  width: 100%;
-  min-height: calc(100vh - 160px); /* 헤더+푸터 대략 뺀 값 */
+  min-height: calc(100vh - 160px);
   display: flex;
-  justify-content: center;  /* 가로 가운데 */
-  align-items: center;      /* 세로 가운데 */
-  padding: 40px 24px 80px;
-  box-sizing: border-box;
+  justify-content: center;
 }
-
-/* 안쪽 래퍼: 내용은 위→아래 정렬, 폭 제한 */
 
 .login-wrapper {
-  width: 100%;
-  max-width: 480px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* 상단 타이틀 영역 */
-
-.login-hero {
-  width: 100%;
+  margin: 80px auto 120px;
   text-align: center;
-  margin-bottom: 18px;
 }
 
-.login-title {
-  font-size: 24px;
+/* 상단 브랜드 영역 */
+
+.login-brand {
+  margin-bottom: 24px;
+}
+
+.login-logo-mark {
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  background: #ffe2ec;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  margin-bottom: 10px;
+}
+
+.login-logo-title {
+  font-size: 20px;
   font-weight: 700;
   color: #ff2f78;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
-.login-sub {
+.login-logo-sub {
   font-size: 13px;
-  color: #6b7280;
+  color: #9ca3af;
 }
 
-/* 카드 박스 */
+/* 카드 — 핑크 그라데이션 제거, 무난한 그림자로 */
 
 .login-card {
-  width: 100%;
-  background: linear-gradient(180deg, #ffeef6 0%, #ffe7f4 100%);
-  border-radius: 26px;
-  padding: 14px;
-  box-shadow: 0 16px 40px rgba(255, 111, 166, 0.25);
+  width: 420px;
+  max-width: 100%;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 26px 32px 28px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08); /* 회색 그림자 */
+  border: 1px solid #f3f4f6;
 }
 
 .login-form {
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 22px 24px 24px;
+  text-align: left;
 }
 
-/* 입력 필드 */
+/* 필드 */
 
 .login-field {
   margin-bottom: 14px;
@@ -65,24 +67,19 @@
 .login-label {
   display: block;
   font-size: 13px;
-  color: #374151;
+  color: #4b5563;
   margin-bottom: 6px;
-}
-
-.login-required {
-  color: #ff2f78;
-  margin-left: 2px;
-  font-weight: 700;
 }
 
 .login-input {
   width: 100%;
   height: 40px;
   border-radius: 10px;
-  border: 1px solid #f3d3e2;
+  border: 1px solid #e5e7eb;
   padding: 0 12px;
   font-size: 13px;
   outline: none;
+  background: #f9fafb;
 }
 
 .login-input::placeholder {
@@ -91,24 +88,33 @@
 
 .login-input:focus {
   border-color: #ff8db5;
-  box-shadow: 0 0 0 1px rgba(255, 141, 181, 0.2);
+  box-shadow: 0 0 0 1px rgba(255, 141, 181, 0.18);
 }
 
-/* 옵션 라인 */
+/* 에러 메시지 */
+
+.login-error {
+  margin-top: 2px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #ef4444;
+}
+
+/* 옵션 행 */
 
 .login-options-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin: 6px 0 14px;
+  font-size: 12px;
 }
 
 .login-checkbox {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: #4b5563;
+  gap: 4px;
+  color: #6b7280;
 }
 
 .login-checkbox input {
@@ -116,15 +122,26 @@
   height: 14px;
 }
 
-/* 작은 링크 버튼들 */
+/* 아이디/비번 찾기 묶음 */
+
+.login-links-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.login-links-divider {
+  font-size: 11px;
+  color: #d1d5db;
+}
 
 .login-link-button {
   border: none;
   background: none;
+  padding: 0;
   font-size: 12px;
   color: #9ca3af;
   cursor: pointer;
-  padding: 0;
 }
 
 .login-link-button.strong {
@@ -136,16 +153,38 @@
 
 .login-submit {
   width: 100%;
-  height: 42px;
+  height: 40px;
   border-radius: 999px;
   border: none;
-  background: linear-gradient(90deg, #ff6fa6, #ff3f7f);
-  color: #ffffff;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  background: #ffbcd6;
+  color: #ffffff;
   margin-top: 4px;
-  box-shadow: 0 10px 22px rgba(255, 111, 166, 0.35);
+  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.05s ease;
+}
+
+.login-submit:not(.disabled):hover {
+  background: linear-gradient(90deg, #ff6fa6, #ff3f7f);
+  box-shadow: 0 10px 22px rgba(255, 111, 166, 0.32);
+  transform: translateY(-1px);
+}
+
+.login-submit.disabled,
+.login-submit:disabled {
+  opacity: 0.65;
+  cursor: default;
+  box-shadow: none;
+}
+
+/* 가입 안내 */
+
+.login-bottom-text {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
 }
 
 /* 구분선 */
@@ -153,11 +192,10 @@
 .login-divider {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin: 16px 0 10px;
-  font-size: 11px;
+  gap: 10px;
+  margin: 18px 0 14px;
+  font-size: 12px;
   color: #9ca3af;
-  position: relative;
 }
 
 .login-divider::before,
@@ -168,17 +206,12 @@
   background: #f3e2eb;
 }
 
-.login-divider span {
-  padding: 0 8px;
-}
+/* 소셜 로그인 버튼들 */
 
-/* 소셜 로그인 */
-
-.login-social-row {
+.login-social-column {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 10px;
 }
 
 .login-social-btn {
@@ -190,36 +223,22 @@
   cursor: pointer;
 }
 
-/* 카카오 / 구글 색감 */
+/* 카카오: 노랑 */
 
 .login-social-btn.kakao {
-  background: #fee500;
-  color: #3a1d1d;
+  background: #ffe500;
 }
+
+/* 구글: 흰색 + 테두리 */
 
 .login-social-btn.google {
-  background: #f3f4f6;
-  color: #374151;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
 }
 
-/* 하단 안내 */
+/* 네이버: 초록 */
 
-.login-bottom-text {
-  margin-top: 6px;
-  font-size: 12px;
-  color: #6b7280;
-  text-align: center;
-}
-
-/* 반응형 */
-
-@media (max-width: 640px) {
-  .login-page {
-    padding-top: 32px;
-    padding-bottom: 60px;
-  }
-
-  .login-wrapper {
-    max-width: 100%;
-  }
+.login-social-btn.naver {
+  background: #03c75a;
+  color: #ffffff;
 }
