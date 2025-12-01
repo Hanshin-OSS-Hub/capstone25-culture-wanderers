@@ -1,6 +1,14 @@
 import { Link } from "react-router-dom";
 
 export default function Layout({ children }) {
+  const STORAGE_KEY = "loggedInUser";
+
+  // 현재 로그인된 사용자 체크 (localStorage 또는 sessionStorage)
+  const getLoggedInUser = () =>
+    localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY);
+
+  const user = getLoggedInUser();
+
   return (
     <div className="app-root">
       {/* 헤더 */}
@@ -18,7 +26,13 @@ export default function Layout({ children }) {
           <Link to="/party">파티 모집</Link>
           <Link to="/community">커뮤니티</Link>
           <Link to="/benefits">학생 할인 모아보기</Link>
-          <Link to="/login">로그인</Link>
+
+          {/* 🔽 로그인 여부에 따라 메뉴가 달라짐 */}
+          {user ? (
+            <Link to="/mypage">마이페이지</Link>
+          ) : (
+            <Link to="/login">로그인</Link>
+          )}
         </nav>
       </header>
 
