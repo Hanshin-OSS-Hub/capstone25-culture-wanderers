@@ -12,6 +12,7 @@ import CommunityDetail from "./pages/CommunityDetail";
 import Login from "./pages/Login";
 import MyPage from "./pages/MyPage";
 import Benefits from "./pages/Benefits";
+import PartyDetail from "./pages/PartyDetail";
 
 export default function App() {
   return (
@@ -19,9 +20,10 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/search" element={<Search />} />
-        <Route path="/festival/:id" element={<Detail />} />
+        <Route path="/detail/:id" element={<Detail />} />
         <Route path="/party" element={<PartyList />} />
         <Route path="/party/write" element={<PartyWrite />} />
+        <Route path="/party/:id" element={<PartyDetail />} />
         <Route path="/community" element={<Community />} />
         <Route path="/community/write/:type" element={<CommunityWrite />} />
         <Route path="/community/:type/:id" element={<CommunityDetail />} />
