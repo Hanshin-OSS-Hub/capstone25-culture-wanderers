@@ -110,7 +110,6 @@ export default function MyPage() {
         <div className="mypage-main-row">
           {/* 사이드바 */}
           <aside className="mypage-sidebar">
-            <h2 className="mypage-side-title">내 정보</h2>
             <ul className="mypage-side-menu">
               <li className="active">
                 <button type="button">
@@ -191,32 +190,32 @@ export default function MyPage() {
 
               {/* 상단 기본 정보 카드 */}
               <div className="mypage-info-card">
+
                 <div className="mypage-info-left">
                   <div className="mypage-info-icon">●</div>
-                  <div>
+
+                  <div className="mypage-info-text-group">
                     <div className="mypage-info-name">{nickname}님</div>
-                    <div className="mypage-info-greeting">
-                      {profile.greeting}
+                    <div className="mypage-info-greeting">{profile.greeting}</div>
+                    <div className="mypage-info-details">
+                      <div className="mypage-info-item">
+                        <span className="label">가입일</span>
+                        <span className="value">{profile.joinDate}</span>
+                      </div>
+                      <div className="mypage-info-item">
+                        <span className="label">활동 온도</span>
+                        <span className="value">
+                          {profile.temperature.toFixed(1)}°C
+                        </span>
+                      </div>
+                      <div className="mypage-info-item">
+                        <span className="label">레벨</span>
+                        <span className="value">{profile.level}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="mypage-info-right">
-                  <div className="mypage-info-item">
-                    <span className="label">가입일</span>
-                    <span className="value">{profile.joinDate}</span>
-                  </div>
-                  <div className="mypage-info-item">
-                    <span className="label">활동 온도</span>
-                    <span className="value">
-                      {profile.temperature.toFixed(1)}°C
-                    </span>
-                  </div>
-                  <div className="mypage-info-item">
-                    <span className="label">레벨</span>
-                    <span className="value">{profile.level}</span>
-                  </div>
-                </div>
               </div>
 
               {/* ⭐ 나의 문화 여정 카드 */}
@@ -264,8 +263,7 @@ export default function MyPage() {
                   <div className="stat-left">
                     <div className="stat-icon">📄</div>
                     <div className="stat-text">
-                      <div className="stat-title">내가 쓴 리뷰</div>
-                      <div className="stat-sub">남긴 후기 개수</div>
+                      <div className="stat-title"><br/>내가 쓴 리뷰</div>
                     </div>
                   </div>
                   <div className="stat-value">{stats.reviews}</div>
@@ -275,8 +273,7 @@ export default function MyPage() {
                   <div className="stat-left">
                     <div className="stat-icon">📣</div>
                     <div className="stat-text">
-                      <div className="stat-title">내가 쓴 파티 모집글</div>
-                      <div className="stat-sub">직접 모집한 파티</div>
+                      <div className="stat-title"><br/>내가 쓴 파티 모집글</div>
                     </div>
                   </div>
                   <div className="stat-value">{stats.partyPosts}</div>
@@ -286,8 +283,7 @@ export default function MyPage() {
                   <div className="stat-left">
                     <div className="stat-icon">🎉</div>
                     <div className="stat-text">
-                      <div className="stat-title">참여한 파티</div>
-                      <div className="stat-sub">신청 후 참석한 파티</div>
+                      <div className="stat-title"><br/>참여한 파티</div>
                     </div>
                   </div>
                   <div className="stat-value">{stats.joinedParties}</div>
@@ -297,8 +293,7 @@ export default function MyPage() {
                   <div className="stat-left">
                     <div className="stat-icon">💗</div>
                     <div className="stat-text">
-                      <div className="stat-title">좋아요한 행사</div>
-                      <div className="stat-sub">찜한 축제·전시 등</div>
+                      <div className="stat-title"><br/>좋아요한 행사</div>
                     </div>
                   </div>
                   <div className="stat-value">{stats.likedEvents}</div>
