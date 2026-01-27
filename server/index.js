@@ -12,7 +12,7 @@ app.use(express.json());
 const dbConfig = {
     host: 'localhost',
     user: 'root',
-    password: 'Project2025!',
+    password: 'root',
     database: 'culture_wanderers'
 };
 
