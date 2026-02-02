@@ -10,6 +10,7 @@ import Community from "./pages/Community";
 import CommunityWrite from "./pages/CommunityWrite";
 import CommunityDetail from "./pages/CommunityDetail";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";      // 2026.02.02 추가
 import MyPage from "./pages/MyPage";
 import Benefits from "./pages/Benefits";
 import PartyDetail from "./pages/PartyDetail";
@@ -19,11 +20,7 @@ export default function App() {
     <Layout>
       <Routes>
         <Route path="/" element={<Home />} />
-
-        {/* ✅ 기존 검색 페이지 */}
         <Route path="/search" element={<Search />} />
-
-        {/* ✅ 추가: /result도 Search 페이지로 열리게(결과 페이지로 재사용) */}
         <Route path="/result" element={<Search />} />
 
         <Route path="/detail/:id" element={<Detail />} />
@@ -34,8 +31,10 @@ export default function App() {
         <Route path="/community/write/:type" element={<CommunityWrite />} />
         <Route path="/community/:type/:id" element={<CommunityDetail />} />
         <Route path="/benefits" element={<Benefits />} />
+
         <Route path="/login" element={<Login />} />
         <Route path="/mypage" element={<MyPage />} />
+        <Route path="/signup" element={<Signup />} />  {/* 2026.02.02 추가 */}
       </Routes>
     </Layout>
   );
