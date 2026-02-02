@@ -1,0 +1,66 @@
+.myreviews-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.review-write-btn {
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: none;
+  background: #ff6b9d;
+  color: white;
+  cursor: pointer;
+}
+
+.review-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.review-card {
+  padding: 16px;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.review-card-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #777;
+}
+
+.review-title {
+  margin: 8px 0;
+}
+
+.review-rating {
+  color: #ffb400;
+}
+
+.review-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.edit-btn,
+.delete-btn {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.edit-btn {
+  background: #eee;
+}
+
+.delete-btn {
+  background: #ffe5e5;
+  color: #d60000;
+}
