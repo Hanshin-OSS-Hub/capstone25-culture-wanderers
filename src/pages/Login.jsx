@@ -1,6 +1,6 @@
 // src/pages/Login.jsx
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ 추가
+import { useNavigate } from "react-router-dom"; //  추가
 import "./Login.css";
 
 const STORAGE_KEY = "loggedInUser";
@@ -14,15 +14,20 @@ export default function Login() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
+  /* loggedInUser 같은 더미 저장을 없애고
+AuthContext의 user 기준으로 판단해야 충돌이 안 남.
+
+테스트 단계에서는 로그인 페이지가 계속 튕길 수도 있으니,
+Login.jsx의 이 부분은 당분간 주석 */
+  /*useEffect(() => { 
     const stored =
       localStorage.getItem(STORAGE_KEY) ||
       sessionStorage.getItem(STORAGE_KEY);
     if (stored) {
-      navigate("/mypage", { replace: true }); // ✅ 라우터 방식 권장
+      navigate("/mypage", { replace: true }); //  라우터 방식 권장
       // window.location.href = "/mypage";
     }
-  }, [navigate]);
+  }, [navigate]); */
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -46,7 +51,7 @@ export default function Login() {
       const storage = keepLogin ? localStorage : sessionStorage;
       storage.setItem(STORAGE_KEY, email);
 
-      navigate("/mypage", { replace: true }); // ✅ 라우터 방식 권장
+      navigate("/mypage", { replace: true }); //  라우터 방식 권장
       // window.location.href = "/mypage";
     } else {
       setError("아이디 또는 비밀번호가 올바르지 않습니다.");
@@ -139,7 +144,7 @@ export default function Login() {
               {isSubmitting ? "로그인 중..." : "로그인하기"}
             </button>
 
-            {/* ✅ 가입 안내 - 여기만 수정됨 */}
+            {/* 2026.02.02 추가*/}
             <p className="login-bottom-text">
               아직 계정이 없나요?{" "}
               <button
