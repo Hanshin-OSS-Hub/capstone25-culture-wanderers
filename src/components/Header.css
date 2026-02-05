@@ -1,0 +1,57 @@
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-logo {
+  font-weight: 800;
+  font-size: 18px;
+  color: #ff5a8a;
+  text-decoration: none;
+}
+
+.header-search {
+  flex: 1;
+  max-width: 360px;
+  margin: 0 24px;
+}
+
+.header-search-input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid #e5e5e5;
+  font-size: 14px;
+}
+
+.header-search-input:focus {
+  outline: none;
+  border-color: #ff8fb0;
+}
+
+.header-nav {
+  display: flex;
+  gap: 18px;
+}
+
+.header-nav a {
+  font-size: 14px;
+  color: #333;
+  text-decoration: none;
+}
+
+.header-nav a:hover {
+  color: #ff5a8a;
+}

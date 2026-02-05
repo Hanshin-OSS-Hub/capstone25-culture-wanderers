@@ -1,13 +1,35 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 export default function Layout({ children }) {
   const STORAGE_KEY = "loggedInUser";
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  // 현재 로그인된 사용자 체크 (localStorage 또는 sessionStorage)
+  // 현재 로그인된 사용자 체크
   const getLoggedInUser = () =>
     localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY);
 
   const user = getLoggedInUser();
+
+  // 헤더 검색 상태
+  const [q, setQ] = useState("");
+
+  // URL에 ?q= 있으면 헤더 검색창에 반영
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const keyword = params.get("q") || "";
+    setQ(keyword);
+  }, [location.search]);
+
+  // 헤더 검색 실행
+  const onSubmitSearch = (e) => {
+    e.preventDefault();
+    const keyword = q.trim();
+    if (!keyword) return;
+
+    navigate(`/result?q=${encodeURIComponent(keyword)}`);
+  };
 
   return (
     <div className="app-root">
@@ -17,9 +39,14 @@ export default function Layout({ children }) {
           <Link to="/">문화유목민</Link>
         </div>
 
-        <div className="header-search">
-          <input placeholder="검색" />
-        </div>
+        {/*  검색창 */}
+        <form className="header-search" onSubmit={onSubmitSearch}>
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="검색"
+          />
+        </form>
 
         <nav className="header-nav">
           <Link to="/search">축제 탐색</Link>
@@ -27,7 +54,7 @@ export default function Layout({ children }) {
           <Link to="/community">커뮤니티</Link>
           <Link to="/benefits">학생 할인 모아보기</Link>
 
-          {/* 🔽 로그인 여부에 따라 메뉴가 달라짐 */}
+          {/* 로그인 여부 */}
           {user ? (
             <Link to="/mypage">마이페이지</Link>
           ) : (

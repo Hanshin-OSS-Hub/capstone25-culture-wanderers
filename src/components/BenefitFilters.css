@@ -1,0 +1,47 @@
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  background: #fff;
+  border: 1px solid #f2d6df;
+  border-radius: 14px;
+
+  padding: 12px 14px;
+  margin: 16px 0 14px; /* 카드 바로 위 여백 */
+}
+
+.filters select {
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid #e9e9e9;
+  background: #fff;
+  font-size: 14px;
+}
+
+.free-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto; /* 오른쪽으로 밀기 */
+  font-size: 14px;
+  color: #333;
+}
+
+.free-toggle input {
+  width: 16px;
+  height: 16px;
+}
+
+/* 반응형: 좁아지면 줄바꿈 */
+@media (max-width: 640px) {
+  .filters {
+    flex-wrap: wrap;
+  }
+  .free-toggle {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
