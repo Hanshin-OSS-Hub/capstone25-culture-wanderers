@@ -1,133 +1,209 @@
+/* src/pages/Benefits.css */
+
 .benefits-page {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 40px 24px 80px;
+  min-height: 100vh;
+  padding: 56px 16px;
+  background: linear-gradient(180deg, #fff5f8 0%, #ffe9f0 100%);
 }
 
 .benefits-header {
+  max-width: 1100px;
+  margin: 0 auto 28px;
   text-align: center;
-  margin-bottom: 28px;
 }
 
 .benefits-kicker {
-  font-size: 13px;
-  color: #ff2f78;
-  font-weight: 600;
-  margin-bottom: 4px;
+  color: #ff6b9a;
+  font-weight: 700;
+  margin-bottom: 6px;
 }
 
 .benefits-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: #111827;
-  margin-bottom: 8px;
+  margin: 0 0 8px;
+  font-size: 34px;
+  font-weight: 800;
+  color: #ff4f86;
 }
 
 .benefits-sub {
-  font-size: 14px;
-  color: #6b7280;
+  color: #666;
+  margin: 0;
 }
 
-/* 필터 바 */
 .benefits-filter-bar {
+  max-width: 1100px;
+  margin: 18px auto 18px;
+  background: #fff;
+  border: 1px solid #ffd7e6;
+  border-radius: 16px;
+  padding: 14px 14px;
   display: flex;
-  gap: 16px;
-  align-items: flex-end;
-  padding: 16px 20px;
-  border-radius: 18px;
-  background: #ffeef5;
-  margin-bottom: 20px;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
 
 .benefits-filter-group {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  gap: 10px;
+  align-items: center;
 }
 
 .benefits-filter-label {
   font-size: 13px;
-  color: #6b7280;
+  color: #666;
+  min-width: 52px;
 }
 
 .benefits-select {
-  padding: 8px 10px;
-  border-radius: 999px;
-  border: 1px solid #f9cadf;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
   background: #fff;
-  font-size: 13px;
+  outline: none;
 }
 
 .benefits-checkbox {
-  margin-left: auto;
-  display: inline-flex;
+  display: flex;
+  gap: 8px;
   align-items: center;
-  gap: 6px;
+  color: #666;
   font-size: 13px;
-  color: #4b5563;
 }
 
-/* 카드 리스트 */
+.benefits-count {
+  max-width: 1100px;
+  margin: 0 auto 14px;
+  color: #666;
+}
+
+.benefits-count span {
+  color: #ff4f86;
+  font-weight: 800;
+}
+
 .benefits-list {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
 }
 
+@media (max-width: 980px) {
+  .benefits-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .benefits-list {
+    grid-template-columns: 1fr;
+  }
+}
+.filters {
+  position: sticky;
+  top: 72px; /* 헤더 높이 */
+  z-index: 5;
+}
+
+
+/* 카드 */
 .benefit-card {
-  background: #ffffff;
+  background: #fff;
   border-radius: 18px;
-  padding: 18px 20px 20px;
-  box-shadow: 0 10px 30px rgba(255, 111, 166, 0.12);
+  border: 1px solid #ffe1ec;
+  padding: 18px;
+  box-shadow: 0 12px 30px rgba(255, 110, 155, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.benefit-chip-row {
-  margin-bottom: 6px;
-}
-
-.benefit-chip {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  background: #fff3f7;
-  color: #ff2f78;
-  font-weight: 600;
+.benefit-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .benefit-card-title {
+  margin: 0;
   font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 6px;
-  color: #111827;
+  font-weight: 800;
+  color: #222;
+  line-height: 1.25;
+}
+
+.benefit-badge {
+  background: #eafaf1;
+  color: #1f9d63;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
 }
 
 .benefit-target {
-  font-size: 12px;
-  color: #6b7280;
-  margin-bottom: 8px;
+  margin: 0;
+  font-size: 13px;
+  color: #777;
 }
 
 .benefit-desc {
+  background: #fff0f6;
+  border: 1px solid #ffe1ec;
+  border-radius: 14px;
+  padding: 12px;
+  color: #444;
   font-size: 13px;
-  color: #4b5563;
-  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.benefit-desc p {
+  margin: 0;
+}
+
+.benefit-proof {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.benefit-chip {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #ffd0e1;
+  color: #ff4f86;
+  background: #fff;
+  font-weight: 700;
 }
 
 .benefit-note {
-  font-size: 11px;
-  color: #9ca3af;
-  margin-bottom: 10px;
+  margin: 0;
+  font-size: 12px;
+  color: #ff4f86;
 }
 
 .benefit-button {
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: none;
-  background: linear-gradient(90deg, #ff6fa6, #ff3f7f);
+  margin-top: auto;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  height: 40px;
+  border-radius: 12px;
+  background: #ff4f86;
   color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
+  font-weight: 800;
+  text-decoration: none;
+}
+.benefit-button:hover {
+  filter: brightness(0.96);
+}
+
+.benefits-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 16px; /* 모바일 좌우 여백 */
 }

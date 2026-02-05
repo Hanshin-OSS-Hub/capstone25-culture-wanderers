@@ -1,142 +1,128 @@
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import SearchPanel from '../components/SearchPanel.jsx'
-import FestivalCard from '../components/FestivalCard.jsx'
+import { useEffect, useState } from "react";
+import axios from "axios";
+import SearchPanel from "../components/SearchPanel.jsx";
+import FestivalCard from "../components/FestivalCard.jsx";
 import { Link } from "react-router-dom";
 
-// 학생 할인 카드용 더미 데이터
-const studentDeals = [
-  {
-    id: 1,
-    title: '서울청년문화패스',
-    desc: '서울 거주 19~24세 청년 대상 문화공연 최대 1만원 지원',
-    target: '만 19~24세 서울 청년',
-    benefit: '월 2회, 공연·전시 할인',
-  },
-  {
-    id: 2,
-    title: '국립박물관 대학생 무료입장',
-    desc: '학생증만 있으면 주요 상설 전시 무료 관람',
-    target: '대학생(재학 증명)',
-    benefit: '국립중앙/현대미술관 등',
-  },
-  {
-    id: 3,
-    title: '경기문화재단 청년문화예술카드',
-    desc: '경기도 거주 청년 대상 연간 문화포인트 지원',
-    target: '만 19~34세 경기도 청년',
-    benefit: '영화·전시·공연 결제 가능',
-  },
-]
+import BenefitCard from "../components/BenefitCard.jsx";
+import { benefits } from "../data/benefits";
+import "./Home.css";
+
 
 // 파티 모집 더미 데이터
 const partyList = [
   {
     id: 1,
-    title: '서울 빛초롱 축제 같이 보러 갈 사람 구해요!',
-    date: '11.30 (토) 18:00',
-    place: '청계천',
+    title: "서울 빛초롱 축제 같이 보러 갈 사람 구해요!",
+    date: "11.30 (토) 18:00",
+    place: "청계천",
     comments: 5,
-    members: '3/5명',
-    dday: 'D-3',
+    members: "3/5명",
+    dday: "D-3",
   },
   {
     id: 2,
-    title: '부산 불꽃 축제 함께 즐길 분',
-    date: '12.03 (화) 19:30',
-    place: '광안리 해변',
+    title: "부산 불꽃 축제 함께 즐길 분",
+    date: "12.03 (화) 19:30",
+    place: "광안리 해변",
     comments: 12,
-    members: '2/4명',
-    dday: 'D-6',
+    members: "2/4명",
+    dday: "D-6",
   },
   {
     id: 3,
-    title: '현대미술 전시 관람 후 카페 가요~',
-    date: '12.05 (목) 15:00',
-    place: '국립현대미술관 서울관',
+    title: "현대미술 전시 관람 후 카페 가요~",
+    date: "12.05 (목) 15:00",
+    place: "국립현대미술관 서울관",
     comments: 3,
-    members: '4/6명',
-    dday: 'D-8',
+    members: "4/6명",
+    dday: "D-8",
   },
-]
+];
 
 // 커뮤니티 질문 / 리뷰 더미
 const questions = [
   {
     id: 1,
-    title: '한번 축제비용 적당히 어느 정도가 좋을까요?',
-    tag: '축제예산',
-    time: '2시간 전',
+    title: "한번 축제비용 적당히 어느 정도가 좋을까요?",
+    tag: "축제예산",
+    time: "2시간 전",
     views: 128,
   },
   {
     id: 2,
-    title: '부산 불꽃 축제날 예약 팁 있을까요?',
-    tag: '부산',
-    time: '어제',
+    title: "부산 불꽃 축제날 예약 팁 있을까요?",
+    tag: "부산",
+    time: "어제",
     views: 523,
   },
   {
     id: 3,
-    title: '전시회 사진 촬영 가능한가요?',
-    tag: '전시예절',
-    time: '3일 전',
+    title: "전시회 사진 촬영 가능한가요?",
+    tag: "전시예절",
+    time: "3일 전",
     views: 159,
   },
-]
+];
 
 const reviews = [
   {
     id: 1,
-    title: '서울 한밤 페스티벌 다녀왔어요 (사진 많음)',
-    place: '서울',
+    title: "서울 한밤 페스티벌 다녀왔어요 (사진 많음)",
+    place: "서울",
     rating: 4.5,
     likes: 29,
     comments: 6,
   },
   {
     id: 2,
-    title: '락페스티벌 생존 팁 정리',
-    place: '인천',
+    title: "락페스티벌 생존 팁 정리",
+    place: "인천",
     rating: 5.0,
     likes: 40,
     comments: 18,
   },
   {
     id: 3,
-    title: '푸드 페스티벌 먹방 투어 후기',
-    place: '경기',
+    title: "푸드 페스티벌 먹방 투어 후기",
+    place: "경기",
     rating: 4.0,
     likes: 19,
     comments: 10,
   },
-]
+];
+
+
 
 export default function Home() {
   const [festivals, setFestivals] = useState([]);
 
+  // 더미 데이터 삭제 후 학생 할인 미리보기: 12개 데이터 중 앞 3개만
+  const previewBenefits = benefits.slice(0, 3);
+
   useEffect(() => {
     const formatDate = (dateString) => {
-      if (!dateString) return '';
+      if (!dateString) return "";
       const date = new Date(dateString);
       const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
       return `${year}.${month}.${day}`;
     };
+    
 
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/festivals');
-        
-        const mappedData = response.data.slice(0, 4).map(item => ({
-            id: item.id,
-            title: item.title,
-            period: `${formatDate(item.start_date)} - ${formatDate(item.end_date)}`,
-            place: `${item.region} ${item.location}`,
-            badge: '인기',
-            reviews: Math.floor(Math.random() * 100) + 10,
-            thumbnail_url: item.thumbnail_url
+        const response = await axios.get("http://localhost:3000/api/festivals");
+
+        const mappedData = response.data.slice(0, 4).map((item) => ({
+          id: item.id,
+          title: item.title,
+          period: `${formatDate(item.start_date)} - ${formatDate(item.end_date)}`,
+          place: `${item.region} ${item.location}`,
+          badge: "인기",
+          reviews: Math.floor(Math.random() * 100) + 10,
+          thumbnail_url: item.thumbnail_url,
         }));
 
         setFestivals(mappedData);
@@ -144,6 +130,7 @@ export default function Home() {
         console.error("데이터 로딩 실패:", error);
       }
     };
+
     fetchData();
   }, []);
 
@@ -194,20 +181,13 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="student-row">
-          {studentDeals.map((item) => (
-            <div key={item.id} className="student-card">
-              <div className="student-tag">학생 할인</div>
-              <h3 className="student-title">{item.title}</h3>
-              <p className="student-desc">{item.desc}</p>
-              <div className="student-meta">
-                <span>대상: {item.target}</span>
-                <span>혜택: {item.benefit}</span>
-              </div>
-              <button className="student-link">자세히 보기 →</button>
+        {/* 더미 제거하고 previewBenefits로 렌더링 */}
+        <div className="home-student-row">
+          {previewBenefits.map((b) => (
+            <BenefitCard key={b.id} benefit={b} />
+            ))}
             </div>
-          ))}
-        </div>
+
       </section>
 
       {/* 지금 모집 중인 파티 */}
@@ -262,6 +242,7 @@ export default function Home() {
                 더보기 →
               </Link>
             </div>
+
             <ul className="community-list">
               {questions.map((q) => (
                 <li key={q.id} className="community-item">
@@ -285,6 +266,7 @@ export default function Home() {
                 더보기 →
               </Link>
             </div>
+
             <ul className="community-list">
               {reviews.map((r) => (
                 <li key={r.id} className="review-item">
@@ -305,5 +287,5 @@ export default function Home() {
         </div>
       </section>
     </>
-  )
+  );
 }
