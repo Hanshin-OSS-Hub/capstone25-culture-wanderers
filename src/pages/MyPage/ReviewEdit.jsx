@@ -1,28 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import "./ReviewWrite.css"; // ReviewWrite.css 재사용
-
-const REVIEWS_KEY = "mypage_reviews";
-
-function loadReviews() {
-  try {
-    const raw = localStorage.getItem(REVIEWS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveReviews(next) {
-  localStorage.setItem(REVIEWS_KEY, JSON.stringify(next));
-}
-
-function formatDate(date = new Date()) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
+import { authFetch } from "../../api/authFetch";
+import "./ReviewWrite.css";
 
 export default function ReviewEdit() {
   const navigate = useNavigate();
@@ -31,68 +10,78 @@ export default function ReviewEdit() {
 
   const [found, setFound] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 폼 상태
   const [targetType, setTargetType] = useState("festival");
   const [targetTitle, setTargetTitle] = useState("");
   const [title, setTitle] = useState("");
   const [rating, setRating] = useState(0);
   const [content, setContent] = useState("");
 
-  // ✅ localStorage에서 id로 찾고 폼 초기값 세팅
   useEffect(() => {
-    const all = loadReviews();
-    const item = all.find((r) => Number(r.id) === reviewId);
+    const fetchReview = async () => {
+      try {
+        setLoading(true);
 
-    if (!item) {
+        const review = await authFetch(`/api/reviews/${reviewId}`);
+
+        if (!review) {
+          setFound(null);
+          setLoading(false);
+          return;
+        }
+
+        setFound(review);
+        setTargetType(review.targetType || "festival");
+        setTargetTitle(review.targetTitle || "");
+        setTitle(review.title || "");
+        setRating(review.rating || 0);
+        setContent(review.content || "");
+      } catch (err) {
+        console.error("후기 상세 조회 실패:", err);
+        setFound(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (!reviewId) {
       setFound(null);
       setLoading(false);
       return;
     }
 
-    setFound(item);
-    setTargetType(item.targetType);
-    setTargetTitle(item.targetTitle);
-    setTitle(item.title);
-    setRating(item.rating);
-    setContent(item.content);
-    setLoading(false);
+    fetchReview();
   }, [reviewId]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!targetTitle.trim() || !title.trim() || !rating || !content.trim()) {
-      alert("모든 항목을 입력해주세요.");
+    if (!title.trim() || !rating || !content.trim()) {
+      alert("제목, 별점, 내용을 모두 입력해주세요.");
       return;
     }
 
-    const all = loadReviews();
-    const idx = all.findIndex((r) => Number(r.id) === reviewId);
+    try {
+      setIsSubmitting(true);
 
-    if (idx === -1) {
-      alert("수정할 후기를 찾을 수 없습니다.");
+      await authFetch(`/api/reviews/${reviewId}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          title: title.trim(),
+          rating,
+          content: content.trim(),
+        }),
+      });
+
+      alert("후기가 수정되었습니다!");
       navigate("/mypage/reviews");
-      return;
+    } catch (err) {
+      console.error("후기 수정 실패:", err);
+      alert("후기 수정에 실패했습니다.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const updated = {
-      ...all[idx],
-      targetType,
-      targetTitle: targetTitle.trim(),
-      title: title.trim(),
-      rating,
-      content: content.trim(),
-      updatedAt: formatDate(),
-    };
-
-    const next = all.slice();
-    next[idx] = updated;
-
-    saveReviews(next);
-
-    alert("후기가 수정되었습니다!");
-    navigate("/mypage/reviews");
   };
 
   if (loading) {
@@ -119,30 +108,38 @@ export default function ReviewEdit() {
       <h2>후기 수정</h2>
 
       <form className="review-write-form" onSubmit={handleSubmit}>
-        {/* 대상 타입 */}
         <div className="form-group">
           <label>후기 대상</label>
-          <select
-            value={targetType}
-            onChange={(e) => setTargetType(e.target.value)}
-          >
-            <option value="festival">축제</option>
-            <option value="party">파티</option>
-          </select>
-        </div>
-
-        {/* 대상 이름 */}
-        <div className="form-group">
-          <label>{targetType === "festival" ? "축제명" : "파티명"}</label>
           <input
             type="text"
-            placeholder="이름을 입력하세요"
-            value={targetTitle}
-            onChange={(e) => setTargetTitle(e.target.value)}
+            value={
+              targetType === "festival"
+                ? "축제"
+                : targetType === "party"
+                ? "파티"
+                : targetType === "artgallery"
+                ? "전시"
+                : targetType
+            }
+            disabled
           />
         </div>
 
-        {/* 제목 */}
+        <div className="form-group">
+          <label>
+            {targetType === "festival"
+              ? "축제명"
+              : targetType === "party"
+              ? "파티명"
+              : "대상명"}
+          </label>
+          <input
+            type="text"
+            value={targetTitle}
+            disabled
+          />
+        </div>
+
         <div className="form-group">
           <label>제목</label>
           <input
@@ -150,10 +147,10 @@ export default function ReviewEdit() {
             placeholder="후기 제목을 입력하세요"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            disabled={isSubmitting}
           />
         </div>
 
-        {/* 별점 */}
         <div className="form-group">
           <label>별점</label>
           <div className="star-rating">
@@ -161,11 +158,13 @@ export default function ReviewEdit() {
               <span
                 key={star}
                 className={`star ${rating >= star ? "active" : ""}`}
-                onClick={() => setRating(star)}
+                onClick={() => !isSubmitting && setRating(star)}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") setRating(star);
+                  if (!isSubmitting && (e.key === "Enter" || e.key === " ")) {
+                    setRating(star);
+                  }
                 }}
               >
                 ★
@@ -174,7 +173,6 @@ export default function ReviewEdit() {
           </div>
         </div>
 
-        {/* 내용 */}
         <div className="form-group">
           <label>후기 내용</label>
           <textarea
@@ -182,20 +180,21 @@ export default function ReviewEdit() {
             placeholder="후기를 작성해주세요"
             value={content}
             onChange={(e) => setContent(e.target.value)}
+            disabled={isSubmitting}
           />
         </div>
 
-        {/* 버튼 */}
         <div className="form-actions">
           <button
             type="button"
             className="cancel-btn"
             onClick={() => navigate("/mypage/reviews")}
+            disabled={isSubmitting}
           >
             취소
           </button>
-          <button type="submit" className="submit-btn">
-            저장
+          <button type="submit" className="submit-btn" disabled={isSubmitting}>
+            {isSubmitting ? "저장 중..." : "저장"}
           </button>
         </div>
       </form>

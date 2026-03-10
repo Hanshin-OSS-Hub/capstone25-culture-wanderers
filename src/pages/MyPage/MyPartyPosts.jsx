@@ -1,26 +1,73 @@
 import { useEffect, useMemo, useState } from "react";
+import { authFetch } from "../../api/authFetch";
 import "./MyPartyPosts.css";
-
-const POSTS_KEY = "mypage_party_posts";
-
-function loadPosts() {
-  try {
-    const raw = localStorage.getItem(POSTS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function savePosts(next) {
-  localStorage.setItem(POSTS_KEY, JSON.stringify(next));
-}
 
 function formatDate(date = new Date()) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
+}
+
+function formatDateTimeForInput(value) {
+  if (!value) return "";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    if (typeof value === "string") {
+      return value.length >= 16 ? value.slice(0, 16) : value;
+    }
+    return "";
+  }
+
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  const hh = String(date.getHours()).padStart(2, "0");
+  const mi = String(date.getMinutes()).padStart(2, "0");
+
+  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+}
+
+function formatDisplayDateTime(value) {
+  if (!value) return "-";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  const hh = String(date.getHours()).padStart(2, "0");
+  const mi = String(date.getMinutes()).padStart(2, "0");
+
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+}
+
+function formatCreatedAt(value) {
+  if (!value) return "-";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function normalizeParty(p) {
+  return {
+    ...p,
+    region: p.location || "",
+    date: formatDateTimeForInput(p.meetingTime),
+    capacity: p.maxPeople ?? 2,
+    contact: p.contact || "",
+  };
 }
 
 const emptyForm = {
@@ -37,19 +84,44 @@ export default function MyPartyPosts() {
   const [mode, setMode] = useState("list"); // list | create | edit
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 최초 로드
   useEffect(() => {
-    const stored = loadPosts();
-    // 최신순 정렬(선택)
-    const sorted = stored
-      .slice()
-      .sort((a, b) =>
-        (b.updatedAt || b.createdAt || "").localeCompare(
-          a.updatedAt || a.createdAt || ""
-        )
-      );
-    setPosts(sorted);
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const data = await authFetch("/api/me/party-posts");
+
+        const postList = Array.isArray(data)
+          ? data
+          : Array.isArray(data.data)
+          ? data.data
+          : [];
+
+        const normalized = postList.map(normalizeParty);
+
+        const sorted = normalized
+          .slice()
+          .sort((a, b) =>
+            String(b.updatedAt || b.createdAt || "").localeCompare(
+              String(a.updatedAt || a.createdAt || "")
+            )
+          );
+
+        setPosts(sorted);
+      } catch (err) {
+        console.error("내 파티 모집글 조회 실패:", err);
+        setError("내 파티 모집글을 불러오지 못했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
   }, []);
 
   const isEditing = mode === "edit";
@@ -68,7 +140,10 @@ export default function MyPartyPosts() {
   const openCreate = () => {
     setMode("create");
     setEditingId(null);
-    setForm({ ...emptyForm, date: formatDate() });
+    setForm({
+      ...emptyForm,
+      date: `${formatDate()}T19:00`,
+    });
   };
 
   const openEdit = (id) => {
@@ -77,6 +152,7 @@ export default function MyPartyPosts() {
       alert("수정할 글을 찾을 수 없습니다.");
       return;
     }
+
     setMode("edit");
     setEditingId(id);
     setForm({
@@ -89,11 +165,20 @@ export default function MyPartyPosts() {
     });
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!window.confirm("이 모집글을 삭제할까요?")) return;
-    const next = posts.filter((p) => Number(p.id) !== Number(id));
-    setPosts(next);
-    savePosts(next);
+
+    try {
+      await authFetch(`/api/party-posts/${id}`, {
+        method: "DELETE",
+      });
+
+      setPosts((prev) => prev.filter((p) => Number(p.id) !== Number(id)));
+      alert("모집글이 삭제되었습니다.");
+    } catch (err) {
+      console.error("모집글 삭제 실패:", err);
+      alert("모집글 삭제에 실패했습니다.");
+    }
   };
 
   const handleChange = (key, value) => {
@@ -103,13 +188,13 @@ export default function MyPartyPosts() {
   const validate = () => {
     if (!form.title.trim()) return "제목을 입력해주세요.";
     if (!form.region.trim()) return "지역을 입력해주세요.";
-    if (!form.date.trim()) return "날짜를 입력해주세요.";
+    if (!form.date.trim()) return "모임 일시를 입력해주세요.";
     if (!form.content.trim()) return "내용을 입력해주세요.";
     if (Number(form.모집인원) < 2) return "모집인원은 최소 2명 이상으로 해주세요.";
     return "";
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const msg = validate();
@@ -118,55 +203,92 @@ export default function MyPartyPosts() {
       return;
     }
 
-    if (mode === "create") {
-      const newPost = {
-        id: Date.now(),
-        title: form.title.trim(),
-        region: form.region.trim(),
-        date: form.date.trim(),
-        capacity: Number(form.모집인원),
-        contact: form.contact.trim(),
-        content: form.content.trim(),
-        createdAt: formatDate(),
-      };
+    const payload = {
+      title: form.title.trim(),
+      content: form.content.trim(),
+      status: "OPEN",
+      category: "GENERAL",
+      maxPeople: Number(form.모집인원),
+      currentPeople: isEditing ? editingPost?.currentPeople ?? 0 : 0,
+      meetingTime: form.date,
+      location: form.region.trim(),
+    };
 
-      const next = [newPost, ...posts];
-      setPosts(next);
-      savePosts(next);
+    try {
+      setIsSubmitting(true);
 
-      alert("모집글이 등록되었습니다!");
-      resetToList();
-      return;
-    }
+      if (mode === "create") {
+        const created = await authFetch("/api/party-posts", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
 
-    if (mode === "edit") {
-      const idx = posts.findIndex((p) => Number(p.id) === Number(editingId));
-      if (idx === -1) {
-        alert("수정할 글을 찾을 수 없습니다.");
+        const newPost = normalizeParty(
+          created?.data ?? created ?? {
+            ...payload,
+            id: Date.now(),
+            createdAt: new Date().toISOString(),
+          }
+        );
+
+        setPosts((prev) =>
+          [newPost, ...prev].sort((a, b) =>
+            String(b.updatedAt || b.createdAt || "").localeCompare(
+              String(a.updatedAt || a.createdAt || "")
+            )
+          )
+        );
+
+        alert("모집글이 등록되었습니다!");
         resetToList();
         return;
       }
 
-      const updated = {
-        ...posts[idx],
-        title: form.title.trim(),
-        region: form.region.trim(),
-        date: form.date.trim(),
-        capacity: Number(form.모집인원),
-        contact: form.contact.trim(),
-        content: form.content.trim(),
-        updatedAt: formatDate(),
-      };
+      if (mode === "edit") {
+        const updatedResponse = await authFetch(`/api/party-posts/${editingId}`, {
+          method: "PATCH",
+          body: JSON.stringify(payload),
+        });
 
-      const next = posts.slice();
-      next[idx] = updated;
-      setPosts(next);
-      savePosts(next);
+        const updatedPost = normalizeParty(
+          updatedResponse?.data ?? updatedResponse ?? {
+            ...editingPost,
+            ...payload,
+            id: editingId,
+            updatedAt: new Date().toISOString(),
+          }
+        );
 
-      alert("모집글이 수정되었습니다!");
-      resetToList();
+        setPosts((prev) =>
+          prev
+            .map((p) =>
+              Number(p.id) === Number(editingId) ? { ...p, ...updatedPost } : p
+            )
+            .sort((a, b) =>
+              String(b.updatedAt || b.createdAt || "").localeCompare(
+                String(a.updatedAt || a.createdAt || "")
+              )
+            )
+        );
+
+        alert("모집글이 수정되었습니다!");
+        resetToList();
+      }
+    } catch (err) {
+      console.error("모집글 저장 실패:", err);
+      alert("모집글 저장에 실패했습니다.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return <div className="myposts-page">내 파티 모집글을 불러오는 중...</div>;
+  }
+
+  if (error) {
+    return <div className="myposts-page">{error}</div>;
+  }
 
   return (
     <div className="myposts-page">
@@ -184,7 +306,6 @@ export default function MyPartyPosts() {
         )}
       </div>
 
-      {/* 작성/수정 폼 */}
       {mode !== "list" && (
         <section className="myposts-form-card">
           <h3 className="myposts-form-title">
@@ -193,8 +314,10 @@ export default function MyPartyPosts() {
 
           {isEditing && editingPost && (
             <p className="myposts-form-sub">
-              작성일: {editingPost.createdAt}
-              {editingPost.updatedAt ? ` · 수정일: ${editingPost.updatedAt}` : ""}
+              작성일: {formatCreatedAt(editingPost.createdAt)}
+              {editingPost.updatedAt
+                ? ` · 수정일: ${formatCreatedAt(editingPost.updatedAt)}`
+                : ""}
             </p>
           )}
 
@@ -206,6 +329,7 @@ export default function MyPartyPosts() {
                   value={form.title}
                   onChange={(e) => handleChange("title", e.target.value)}
                   placeholder="예) 같이 홍대 축제 보러가요!"
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -215,15 +339,17 @@ export default function MyPartyPosts() {
                   value={form.region}
                   onChange={(e) => handleChange("region", e.target.value)}
                   placeholder="예) 서울 / 홍대"
+                  disabled={isSubmitting}
                 />
               </div>
 
               <div className="myposts-field">
-                <label>날짜</label>
+                <label>모임 일시</label>
                 <input
-                  type="date"
+                  type="datetime-local"
                   value={form.date}
                   onChange={(e) => handleChange("date", e.target.value)}
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -234,15 +360,17 @@ export default function MyPartyPosts() {
                   min={2}
                   value={form.모집인원}
                   onChange={(e) => handleChange("모집인원", e.target.value)}
+                  disabled={isSubmitting}
                 />
               </div>
 
               <div className="myposts-field full">
-                <label>연락 방법(선택)</label>
+                <label>연락 방법(현재 저장 안 됨)</label>
                 <input
                   value={form.contact}
                   onChange={(e) => handleChange("contact", e.target.value)}
-                  placeholder="예) 오픈채팅 링크 / 인스타 ID"
+                  placeholder="백엔드 필드 없어서 화면 입력만 됩니다."
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -253,6 +381,7 @@ export default function MyPartyPosts() {
                   value={form.content}
                   onChange={(e) => handleChange("content", e.target.value)}
                   placeholder="어떤 분위기/조건인지 자세히 적어주세요."
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
@@ -262,18 +391,22 @@ export default function MyPartyPosts() {
                 type="button"
                 className="myposts-ghost-btn"
                 onClick={resetToList}
+                disabled={isSubmitting}
               >
                 취소
               </button>
-              <button type="submit" className="myposts-primary-btn">
-                {isEditing ? "저장" : "등록"}
+              <button
+                type="submit"
+                className="myposts-primary-btn"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "저장 중..." : isEditing ? "저장" : "등록"}
               </button>
             </div>
           </form>
         </section>
       )}
 
-      {/* 목록 */}
       {mode === "list" && (
         <>
           {posts.length === 0 ? (
@@ -286,12 +419,19 @@ export default function MyPartyPosts() {
                 <article key={p.id} className="myposts-card">
                   <div className="myposts-card-top">
                     <div className="myposts-badges">
-                      <span className="badge">📍 {p.region}</span>
-                      <span className="badge">📅 {p.date}</span>
-                      <span className="badge">👥 {p.capacity}명</span>
+                      <span className="badge">📍 {p.region || "-"}</span>
+                      <span className="badge">
+                        📅 {formatDisplayDateTime(p.meetingTime || p.date)}
+                      </span>
+                      <span className="badge">👥 {p.capacity ?? 2}명</span>
+                      <span className="badge">상태: {p.status || "OPEN"}</span>
                     </div>
                     <div className="myposts-dates">
-                      <span>{p.updatedAt ? `${p.updatedAt} (수정)` : p.createdAt}</span>
+                      <span>
+                        {p.updatedAt
+                          ? `${formatCreatedAt(p.updatedAt)} (수정)`
+                          : formatCreatedAt(p.createdAt)}
+                      </span>
                     </div>
                   </div>
 
@@ -304,10 +444,7 @@ export default function MyPartyPosts() {
                   ) : null}
 
                   <div className="myposts-card-actions">
-                    <button
-                      className="btn-edit"
-                      onClick={() => openEdit(p.id)}
-                    >
+                    <button className="btn-edit" onClick={() => openEdit(p.id)}>
                       수정
                     </button>
                     <button
