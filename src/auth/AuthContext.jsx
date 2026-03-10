@@ -3,8 +3,23 @@ import { apiClient } from "../api/apiClient";
 
 const AuthContext = createContext(null);
 
+const STORAGE_KEY = "loggedInUser";
+const TOKEN_KEY = "token";
+
+function getStoredValue(key) {
+  return localStorage.getItem(key) || sessionStorage.getItem(key);
+}
+
+function clearStoredAuth() {
+  localStorage.removeItem(STORAGE_KEY);
+  sessionStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
+}
+
 export function AuthProvider({ children }) {
-    console.log("✅ AuthProvider mounted");
+  console.log("✅ AuthProvider mounted");
+
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -12,56 +27,126 @@ export function AuthProvider({ children }) {
 
   const refreshMe = async () => {
     try {
-      // 백엔드 준비되면 GET /api/me로 연결
-      const res = await apiClient.get("/api/me");
-      setUser(res.data?.data || res.data); // 백엔드 포맷에 맞춰 조정
+      const token = getStoredValue(TOKEN_KEY);
+
+      if (!token) {
+        setUser(null);
+        return;
+      }
+
+      const res = await apiClient.get("/api/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setUser(res.data?.data || res.data);
     } catch (e) {
+      console.error("refreshMe 실패:", e);
+      clearStoredAuth();
       setUser(null);
-    } finally {
-      setLoading(false);
     }
   };
 
   const login = async ({ email, password, keepLogin }) => {
-    // 백엔드 준비되면 POST /api/auth/login로 연결
     const res = await apiClient.post("/api/auth/login", { email, password });
 
-    // JWT면 여기서 accessToken 저장(백엔드 확정 후)
-    // const token = res.data?.accessToken;
-    // if (token) {
-    //   const storage = keepLogin ? localStorage : sessionStorage;
-    //   storage.setItem("accessToken", token);
-    // }
+    const token = res.data?.token || res.data?.accessToken || null;
+    const storage = keepLogin ? localStorage : sessionStorage;
 
-    // 로그인 직후 내 정보 갱신
-    // TODO: 백엔드 준비되면 /api/me 연결
-    await refreshMe();
+    clearStoredAuth();
+    storage.setItem(STORAGE_KEY, email);
+
+    if (token) {
+      storage.setItem(TOKEN_KEY, token);
+      await refreshMe();
+    } else {
+      // 토큰 없이 더미/임시 로그인 대응
+      setUser({ email, nickname: email.split("@")[0] });
+    }
+
     return res;
+  };
+
+  const dummyLogin = ({ email, keepLogin }) => {
+    const storage = keepLogin ? localStorage : sessionStorage;
+
+    clearStoredAuth();
+    storage.setItem(STORAGE_KEY, email);
+
+    setUser({
+      email,
+      nickname: email.split("@")[0],
+    });
   };
 
   const logout = async () => {
     try {
-      await apiClient.post("/api/auth/logout");
+      const token = getStoredValue(TOKEN_KEY);
+
+      if (token) {
+        await apiClient.post(
+          "/api/auth/logout",
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+      }
     } catch (e) {
-      // ignore
+      console.error("logout API 실패:", e);
     }
-    localStorage.removeItem("accessToken");
-    sessionStorage.removeItem("accessToken");
+
+    clearStoredAuth();
     setUser(null);
   };
 
   useEffect(() => {
-  //  테스트용 (백엔드 붙이면 지우기)
-  setUser({ email: "test@nomad.com", nickname: "수리" });
-  setLoading(false);
+    const initAuth = async () => {
+      const storedUser = getStoredValue(STORAGE_KEY);
+      const storedToken = getStoredValue(TOKEN_KEY);
 
-  //  백엔드 준비되면 아래로 복구
-  // refreshMe();
+      if (!storedUser) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      // 실제 로그인 토큰 있으면 /api/me 호출
+      if (storedToken) {
+        try {
+          await refreshMe();
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
+
+      // 토큰 없으면 더미 로그인 상태로 간주
+      setUser({
+        email: storedUser,
+        nickname: storedUser.split("@")[0],
+      });
+      setLoading(false);
+    };
+
+    initAuth();
   }, []);
 
-
   return (
-    <AuthContext.Provider value={{ user, isAuthed, loading, login, logout, refreshMe }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthed,
+        loading,
+        login,
+        dummyLogin,
+        logout,
+        refreshMe,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

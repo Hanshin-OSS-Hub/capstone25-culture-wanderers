@@ -15,7 +15,7 @@ export default function RequireAuth({ children }) {
 
   const { isAuthed, loading } = auth;
 
-  if (loading) return null;
+  if (loading) return <div>로딩 중...</div>;
 
   if (!isAuthed) {
     //이미 /login이면 Navigate 하지 말고 그대로 렌더(루프 차단)
