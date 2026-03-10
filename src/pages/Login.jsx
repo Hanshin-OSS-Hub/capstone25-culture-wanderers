@@ -1,12 +1,12 @@
 // src/pages/Login.jsx
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; //  추가
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
 import "./Login.css";
 
-const STORAGE_KEY = "loggedInUser";
-
 export default function Login() {
-  const navigate = useNavigate(); // ✅ 추가
+  const navigate = useNavigate();
+  const { login, dummyLogin } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -14,22 +14,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  /* loggedInUser 같은 더미 저장을 없애고
-AuthContext의 user 기준으로 판단해야 충돌이 안 남.
-
-테스트 단계에서는 로그인 페이지가 계속 튕길 수도 있으니,
-Login.jsx의 이 부분은 당분간 주석 */
-  /*useEffect(() => { 
-    const stored =
-      localStorage.getItem(STORAGE_KEY) ||
-      sessionStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      navigate("/mypage", { replace: true }); //  라우터 방식 권장
-      // window.location.href = "/mypage";
-    }
-  }, [navigate]); */
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -40,21 +25,31 @@ Login.jsx의 이 부분은 당분간 주석 */
 
     setIsSubmitting(true);
 
-    // 임시 계정
-    const dummyEmail = "test@nomad.com";
-    const dummyPassword = "1234";
+    try {
+      // 1) 실제 백엔드 로그인 먼저 시도
+      await login({ email, password, keepLogin });
+      navigate("/mypage", { replace: true });
+      return;
+    } catch (err) {
+      console.error("실제 로그인 실패:", err);
 
-    if (email === dummyEmail && password === dummyPassword) {
-      localStorage.removeItem(STORAGE_KEY);
-      sessionStorage.removeItem(STORAGE_KEY);
+      // 2) 실제 로그인 실패 시 더미 계정 fallback
+      const dummyEmail = "test@nomad.com";
+      const dummyPassword = "1234";
 
-      const storage = keepLogin ? localStorage : sessionStorage;
-      storage.setItem(STORAGE_KEY, email);
+      if (email === dummyEmail && password === dummyPassword) {
+        dummyLogin({ email, keepLogin });
+        navigate("/mypage", { replace: true });
+        return;
+      }
 
-      navigate("/mypage", { replace: true }); //  라우터 방식 권장
-      // window.location.href = "/mypage";
-    } else {
-      setError("아이디 또는 비밀번호가 올바르지 않습니다.");
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "아이디 또는 비밀번호가 올바르지 않습니다.";
+
+      setError(message);
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -64,17 +59,14 @@ Login.jsx의 이 부분은 당분간 주석 */
   return (
     <main className="page login-page">
       <div className="login-wrapper">
-        {/* 상단 브랜드 영역 */}
         <div className="login-brand">
           <div className="login-logo-mark">🍑</div>
           <div className="login-logo-title">문화유목민</div>
           <p className="login-logo-sub">"대학생 문화생활 플랫폼"</p>
         </div>
 
-        {/* 로그인 카드 */}
         <section className="login-card">
           <form className="login-form" onSubmit={handleSubmit}>
-            {/* 이메일 */}
             <div className="login-field">
               <label className="login-label">이메일</label>
               <input
@@ -86,7 +78,6 @@ Login.jsx의 이 부분은 당분간 주석 */
               />
             </div>
 
-            {/* 비밀번호 */}
             <div className="login-field">
               <label className="login-label">비밀번호</label>
               <input
@@ -98,10 +89,8 @@ Login.jsx의 이 부분은 당분간 주석 */
               />
             </div>
 
-            {/* 에러 메시지 */}
             {error && <div className="login-error">{error}</div>}
 
-            {/* 옵션 행 */}
             <div className="login-options-row">
               <label className="login-checkbox">
                 <input
@@ -135,7 +124,6 @@ Login.jsx의 이 부분은 당분간 주석 */
               </div>
             </div>
 
-            {/* 로그인 버튼 */}
             <button
               type="submit"
               className={`login-submit ${isDisabled ? "disabled" : ""}`}
@@ -144,24 +132,21 @@ Login.jsx의 이 부분은 당분간 주석 */
               {isSubmitting ? "로그인 중..." : "로그인하기"}
             </button>
 
-            {/* 2026.02.02 추가*/}
             <p className="login-bottom-text">
               아직 계정이 없나요?{" "}
               <button
                 type="button"
                 className="login-link-button strong"
-                onClick={() => navigate("/signup")} // ✅ 이동
+                onClick={() => navigate("/signup")}
               >
                 회원가입
               </button>
             </p>
 
-            {/* 구분선 */}
             <div className="login-divider">
               <span>또는</span>
             </div>
 
-            {/* 소셜 로그인 버튼들 */}
             <div className="login-social-column">
               <button
                 type="button"
