@@ -18,7 +18,7 @@ function clearStoredAuth() {
 }
 
 export function AuthProvider({ children }) {
-  console.log("✅ AuthProvider mounted");
+  //console.log("AuthProvider mounted");
 
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
