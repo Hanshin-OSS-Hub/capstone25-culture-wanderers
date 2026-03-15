@@ -1,56 +1,107 @@
-import React from "react";
+// src/pages/PartyDetail.jsx
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { authFetch } from "../api/authFetch";
 import "./Party.css";
-
-// 리스트/상세 둘 다에서 쓸 가짜 데이터
-const MOCK_PARTIES = [
-  {
-    id: "1",
-    dday: "D-6",
-    status: "신청 가능",
-    title: "홍대 페스티벌 같이 가실 분 (2/4명)",
-    festival: "2025 홍대 거리공연 축제",
-    date: "2025-12-01 18:00",
-    location: "서울 마포구",
-    currentCount: 2,
-    maxCount: 4,
-    hostName: "페스티벌러버",
-    hostLevel: "Lv.12",
-    detail:
-      "홍대 거리공연 축제 보러 같이 가실 분 구해요! 공연 위주로 둘러보고, 끝나고 근처 카페에서 간단히 이야기 하는 정도로 생각하고 있어요.",
-    condition:
-      "20대 대학생/취준생이면 누구나 환영합니다. 혼자 와도 전혀 어색하지 않게 먼저 말 걸어드릴게요 :)",
-    contact:
-      "카카오톡 오픈채팅 링크를 DM으로 드릴게요. 댓글로 참여 의사만 남겨주세요!",
-    deadline: "행사 전날(11/30) 밤 11시까지 신청 받습니다.",
-  },
-  {
-    id: "2",
-    dday: "D-2",
-    status: "신청 완료",
-    title: "부산 불꽃축제 함께 보러 가요 (3/4명)",
-    festival: "부산 불꽃축제",
-    date: "2025-11-27 19:30",
-    location: "부산 해운대구",
-    currentCount: 3,
-    maxCount: 4,
-    hostName: "불꽃사랑",
-    hostLevel: "Lv.8",
-    detail:
-      "해운대 쪽에서 다 같이 모여서 자리 잡고 불꽃축제 관람하려고 합니다. 간단한 간식은 제가 조금 챙겨갈게요!",
-    condition:
-      "부산/경남 거주자면 좋고, 처음 보는 사람과도 대화 나누는 거 부담 없는 분이면 좋겠습니다.",
-    contact: "카톡 아이디는 댓글 남겨주시면 1:1로 드릴게요.",
-    deadline: "인원 마감 시 조기 마감될 수 있어요.",
-  },
-];
 
 export default function PartyDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const party = MOCK_PARTIES.find((p) => p.id === id) ?? MOCK_PARTIES[0];
-  const progress = (party.currentCount / party.maxCount) * 100;
+  const [party, setParty] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPartyDetail = async () => {
+      try {
+        const data = await authFetch("/api/me/party-posts");
+
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.data)
+          ? data.data
+          : [];
+
+        const normalizedList = list.map((item) => {
+          const currentCount = item.currentPeople ?? item.currentMembers ?? 0;
+          const maxCount = item.maxPeople ?? item.maxMembers ?? 2;
+
+          return {
+            id: String(item.id),
+            dday: item.dday || "",
+            status: currentCount >= maxCount ? "신청 완료" : "신청 가능",
+            title: item.title || "제목 없음",
+            festival: item.festivalTitle || "축제 정보 없음",
+            date: item.eventDate || item.date || "일정 미정",
+            location:
+              [item.region, item.location].filter(Boolean).join(" ") ||
+              item.festivalTitle ||
+              "장소 미정",
+            currentCount,
+            maxCount,
+            hostName: item.authorNickname || item.nickname || "작성자",
+            hostLevel: item.authorLevel || "",
+            detail: item.content || "상세 내용이 없습니다.",
+            condition: item.condition || "별도의 모집 조건이 없습니다.",
+            contact: item.contact || "연락 방법 정보가 없습니다.",
+            deadline: item.deadline || "마감 정보가 없습니다.",
+            festivalId: item.festivalId,
+          };
+        });
+
+        const foundParty =
+          normalizedList.find((p) => String(p.id) === String(id)) || null;
+
+        setParty(foundParty);
+      } catch (error) {
+        console.error("파티 상세 로딩 실패:", error);
+        setParty(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPartyDetail();
+  }, [id]);
+
+  const progress = useMemo(() => {
+    if (!party || !party.maxCount) return 0;
+    return (party.currentCount / party.maxCount) * 100;
+  }, [party]);
+
+  if (loading) {
+    return <div className="loading-box">파티 정보를 불러오는 중...</div>;
+  }
+
+  if (!party) {
+    return (
+      <div className="party-detail-page">
+        <button className="party-back-btn" onClick={() => navigate(-1)}>
+          ← 파티 목록으로
+        </button>
+
+        <div className="party-detail-card">
+          <div className="party-detail-body">
+            <section className="party-detail-section">
+              <h2>파티 정보를 찾을 수 없습니다.</h2>
+              <p>
+                삭제되었거나 현재 로그인한 사용자의 파티 모집글이 아닐 수 있습니다.
+              </p>
+            </section>
+
+            <div className="party-detail-actions">
+              <button
+                className="party-detail-apply-btn"
+                onClick={() => navigate("/party")}
+              >
+                파티 목록으로 이동
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="party-detail-page">
@@ -59,7 +110,7 @@ export default function PartyDetail() {
         ← 파티 목록으로
       </button>
 
-      {/* 🔹 관련 축제 요약 카드 */}
+      {/* 관련 축제 요약 카드 */}
       <section className="party-festival-section">
         <div className="party-festival-card">
           <div className="party-festival-tag">관련 축제</div>
@@ -69,21 +120,28 @@ export default function PartyDetail() {
           </p>
           <button
             className="party-festival-link-btn"
-            onClick={() => navigate("/search")}
+            onClick={() => {
+              if (party.festivalId) {
+                navigate(`/detail/${party.festivalId}`);
+              } else {
+                navigate("/search");
+              }
+            }}
           >
             축제 정보 더 보러가기 →
           </button>
         </div>
       </section>
 
-      {/* 🔹 파티 모집 상세 카드 */}
+      {/* 파티 모집 상세 카드 */}
       <div className="party-detail-card">
         {/* 상단 배지/제목 영역 */}
         <div className="party-detail-header">
           <div className="party-badges-row">
-            <span className="badge-dday">{party.dday}</span>
+            {party.dday && <span className="badge-dday">{party.dday}</span>}
             <span className="badge-status">{party.status}</span>
           </div>
+
           <h1 className="party-detail-title">{party.title}</h1>
 
           <div className="party-detail-meta">
@@ -112,6 +170,7 @@ export default function PartyDetail() {
                 {party.currentCount}/{party.maxCount}명
               </span>
             </div>
+
             <div className="party-progress-bar">
               <div
                 className="party-progress-fill"
@@ -145,7 +204,9 @@ export default function PartyDetail() {
             <div className="party-host">
               <div className="party-host-avatar">🎉</div>
               <div className="party-host-name">{party.hostName}</div>
-              <span className="party-host-level">{party.hostLevel}</span>
+              {party.hostLevel && (
+                <span className="party-host-level">{party.hostLevel}</span>
+              )}
             </div>
           </section>
 

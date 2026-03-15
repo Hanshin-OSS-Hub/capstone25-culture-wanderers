@@ -399,13 +399,13 @@ const Search = () => {
           q ||
           freeOnlyState ||
           maxPriceState < 50000) && (
-          <div style={{ marginBottom: 12, color: '#666', fontSize: 14 }}>
-            적용 조건: {selectedRegion} / {selectedCategory}
-            {selectedDate ? ` / ${selectedDate}` : ''}
-            {q ? ` / "${q}"` : ''}
-            {freeOnlyState ? ` / 무료만` : ` / 0원~${formatWon(maxPriceState)}`}
-          </div>
-        )}
+            <div style={{ marginBottom: 12, color: '#666', fontSize: 14 }}>
+              적용 조건: {selectedRegion} / {selectedCategory}
+              {selectedDate ? ` / ${selectedDate}` : ''}
+              {q ? ` / "${q}"` : ''}
+              {freeOnlyState ? ` / 무료만` : ` / 0원~${formatWon(maxPriceState)}`}
+            </div>
+          )}
 
         {loading ? (
           <p>로딩 중...</p>
@@ -437,10 +437,11 @@ const Search = () => {
                       <span className="card-price" style={{ color: '#888', fontWeight: 'normal' }}>
                         상세 정보 확인
                       </span>
-
                       <div className="card-stats">
-                        <span>⭐ 4.8</span>
-                        <span>👥 12건</span>
+                        <span>
+                          ⭐ {item.review_count > 0 ? Number(item.rating_avg).toFixed(1) : '-'}
+                        </span>
+                        <span>👥 {item.review_count ?? 0}건</span>
                       </div>
                     </div>
                   </div>

@@ -16,49 +16,18 @@ export default function MyPage() {
 
   const nickname = email.split("@")[0] || "유목민";
 
+  // 더미 제거 후 실제로 보여줄 최소 정보만 유지
   const profile = {
-    joinDate: "2024.03.15",
-    level: "Lv.5",
-    temperature: 36.8,
     greeting: "오늘도 문화생활, 가볍게 한 번 떠나볼까요?",
   };
 
+  // 더미 제거 후 안전하게 0 처리
   const stats = {
-    reviews: 12,
-    partyPosts: 3,
-    joinedParties: 5,
-    likedEvents: 24,
+    reviews: 0,
+    partyPosts: 0,
+    joinedParties: 0,
+    likedEvents: 0,
   };
-
-  // ⭐ 문화 여정 더미 데이터 (나중에 백엔드 연결하면 여기만 교체)
-  const journey = {
-    visitedPlaces: 20,
-    milestones: [
-      {
-        id: 1,
-        label: "첫 발걸음",
-        desc: "가까운 전시·축제부터 시작했어요",
-        threshold: 1,
-      },
-      {
-        id: 2,
-        label: "동네 탐험가",
-        desc: "내가 좋아하는 동네 스폿이 생겼어요",
-        threshold: 5,
-      },
-      {
-        id: 3,
-        label: "도시 유목민",
-        desc: "여기저기 새로운 문화 공간을 여행 중이에요",
-        threshold: 15,
-      },
-    ],
-  };
-
-  const currentStepIndex = journey.milestones.reduce(
-    (acc, m, idx) => (journey.visitedPlaces >= m.threshold ? idx : acc),
-    -1
-  );
 
   const handleLogout = () => {
     localStorage.removeItem(STORAGE_KEY);
@@ -68,16 +37,14 @@ export default function MyPage() {
   };
 
   const handleWithdraw = () => {
-    const ok = window.confirm(
-      "정말 탈퇴하시겠어요? 작성한 후기와 파티 정보가 모두 삭제됩니다."
-    );
+    const ok = window.confirm("정말 탈퇴하시겠어요?");
     if (ok) {
-      alert("회원탈퇴 기능은 추후 구현 예정입니다.");
+      window.location.href = "/mypage/withdraw";
     }
   };
 
   const handleEditProfile = () => {
-    alert("추후 '내 정보 수정' 페이지로 이동 예정입니다.");
+    window.location.href = "/mypage/info";
   };
 
   return (
@@ -124,43 +91,34 @@ export default function MyPage() {
                 </button>
               </li>
               <li>
-                <button
-                  type="button"
-                  onClick={() => alert("추후 구현 예정: 좋아요 리스트")}
-                >
+                <Link to="/mypage/likes">
                   <span className="icon">❤️</span>
                   좋아요 리스트
-                </button>
+                </Link>
               </li>
               <li>
-                <Link to="/community">
+                <Link to="/mypage/reviews">
                   <span className="icon">⭐</span>
                   내 후기
                 </Link>
               </li>
               <li>
-                <Link to="/party">
+                <Link to="/mypage/posts">
                   <span className="icon">📣</span>
                   내 파티 모집글
                 </Link>
               </li>
               <li>
-                <button
-                  type="button"
-                  onClick={() => alert("추후 구현 예정: 참여한 파티")}
-                >
+                <Link to="/mypage/parties">
                   <span className="icon">🎉</span>
                   참여한 파티
-                </button>
+                </Link>
               </li>
               <li>
-                <button
-                  type="button"
-                  onClick={() => alert("추후 구현 예정: 캘린더·일정")}
-                >
+                <Link to="/mypage/calendar">
                   <span className="icon">📅</span>
                   캘린더·일정
-                </button>
+                </Link>
               </li>
               <li>
                 <button
@@ -190,7 +148,6 @@ export default function MyPage() {
 
               {/* 상단 기본 정보 카드 */}
               <div className="mypage-info-card">
-
                 <div className="mypage-info-left">
                   <div className="mypage-info-icon">●</div>
 
@@ -199,26 +156,19 @@ export default function MyPage() {
                     <div className="mypage-info-greeting">{profile.greeting}</div>
                     <div className="mypage-info-details">
                       <div className="mypage-info-item">
-                        <span className="label">가입일</span>
-                        <span className="value">{profile.joinDate}</span>
+                        <span className="label">이메일</span>
+                        <span className="value">{email}</span>
                       </div>
                       <div className="mypage-info-item">
-                        <span className="label">활동 온도</span>
-                        <span className="value">
-                          {profile.temperature.toFixed(1)}°C
-                        </span>
-                      </div>
-                      <div className="mypage-info-item">
-                        <span className="label">레벨</span>
-                        <span className="value">{profile.level}</span>
+                        <span className="label">닉네임</span>
+                        <span className="value">{nickname}</span>
                       </div>
                     </div>
                   </div>
                 </div>
-
               </div>
 
-              {/* ⭐ 나의 문화 여정 카드 */}
+              {/* 문화 여정 카드 */}
               <div className="mypage-journey-card">
                 <div className="journey-left">
                   <div className="journey-map">
@@ -230,29 +180,22 @@ export default function MyPage() {
                     <div className="journey-path" />
                   </div>
                   <p className="journey-count">
-                    지금까지 <span>{journey.visitedPlaces}곳</span>의 문화
-                    공간을 탐험했어요
+                    아직 표시할 문화 여정 데이터가 없습니다
                   </p>
                 </div>
 
                 <div className="journey-right">
                   <p className="journey-title">나의 문화 여정</p>
                   <div className="journey-steps">
-                    {journey.milestones.map((step, index) => (
-                      <div
-                        key={step.id}
-                        className={
-                          "journey-step" +
-                          (index <= currentStepIndex ? " active" : "")
-                        }
-                      >
-                        <div className="step-badge">{index + 1}</div>
-                        <div className="step-text">
-                          <div className="step-label">{step.label}</div>
-                          <div className="step-desc">{step.desc}</div>
+                    <div className="journey-step">
+                      <div className="step-badge">-</div>
+                      <div className="step-text">
+                        <div className="step-label">데이터 준비 중</div>
+                        <div className="step-desc">
+                          방문 기록 기반 문화 여정 기능은 추후 연결 예정입니다.
                         </div>
                       </div>
-                    ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -263,7 +206,7 @@ export default function MyPage() {
                   <div className="stat-left">
                     <div className="stat-icon">📄</div>
                     <div className="stat-text">
-                      <div className="stat-title"><br/>내가 쓴 리뷰</div>
+                      <div className="stat-title"><br />내가 쓴 리뷰</div>
                     </div>
                   </div>
                   <div className="stat-value">{stats.reviews}</div>
@@ -273,7 +216,7 @@ export default function MyPage() {
                   <div className="stat-left">
                     <div className="stat-icon">📣</div>
                     <div className="stat-text">
-                      <div className="stat-title"><br/>내가 쓴 파티 모집글</div>
+                      <div className="stat-title"><br />내가 쓴 파티 모집글</div>
                     </div>
                   </div>
                   <div className="stat-value">{stats.partyPosts}</div>
@@ -283,7 +226,7 @@ export default function MyPage() {
                   <div className="stat-left">
                     <div className="stat-icon">🎉</div>
                     <div className="stat-text">
-                      <div className="stat-title"><br/>참여한 파티</div>
+                      <div className="stat-title"><br />참여한 파티</div>
                     </div>
                   </div>
                   <div className="stat-value">{stats.joinedParties}</div>
@@ -293,7 +236,7 @@ export default function MyPage() {
                   <div className="stat-left">
                     <div className="stat-icon">💗</div>
                     <div className="stat-text">
-                      <div className="stat-title"><br/>좋아요한 행사</div>
+                      <div className="stat-title"><br />좋아요한 행사</div>
                     </div>
                   </div>
                   <div className="stat-value">{stats.likedEvents}</div>

@@ -1,84 +1,77 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "./Community.css";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { authFetch } from "../api/authFetch";
 
 export default function Community() {
-  const [tab, setTab] = useState("question"); // question | review
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const initialTab = params.get("tab") === "review" ? "review" : "question";
+
+  const [tab, setTab] = useState(initialTab);
   const [keyword, setKeyword] = useState("");
+  const [questions] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
 
-  // 더미 데이터 (Figma 느낌 맞게 필드 조금 추가)
-  const questions = [
-    {
-      id: 1,
-      title: "홍대 거리 축제 드레스코드가 어떻게 되나요?",
-      excerpt:
-        "다음 주에 홍대 거리 축제에 처음 가는데, 특별한 드레스코드가 있는지 궁금합니다. 단톤 옷 입기라도 해야 할까요?",
-      category: "패션·드레스코드",
-      tag: "서울/홍대",
-      time: "2시간 전",
-      views: 86,
-      replies: 8,
-    },
-    {
-      id: 2,
-      title: "부산 불꽃 축제 가는 교통편 추천 부탁드려요",
-      excerpt:
-        "서울에서 부산 불꽃 축제를 보러 가려고 하는데, KTX 말고 다른 교통편도 괜찮을까요? 비용을 줄이려면 어떤 방법이 좋을지 궁금합니다.",
-      category: "교통·이동",
-      tag: "부산",
-      time: "5시간 전",
-      views: 152,
-      replies: 15,
-    },
-    {
-      id: 3,
-      title: "재즈 페스티벌 포션에 어떤 준비물이 필요할까요?",
-      excerpt:
-        "이번에 재즈 페스티벌에 처음 가봅니다. 야외 공연이라서 어떤 텐트나 돗자리를 챙겨가야 할지 고민이에요.",
-      category: "준비물",
-      tag: "서울",
-      time: "1일 전",
-      views: 129,
-      replies: 12,
-    },
-  ];
+  useEffect(() => {
+    const nextTab = params.get("tab") === "review" ? "review" : "question";
+    setTab(nextTab);
+  }, [location.search]);
 
-  const reviews = [
-    {
-      id: 1,
-      title: "서울 한밤 페스티벌 후기!",
-      excerpt:
-        "야경이 진짜 예쁘고 무대 구성이 생각보다 알찼어요. 입장 동선만 조금 더 정리되면 완벽할 듯...",
-      place: "서울",
-      time: "1일 전",
-      likes: 23,
-      comments: 4,
-    },
-    {
-      id: 2,
-      title: "락페스 생존팁 정리해봤어요",
-      excerpt:
-        "신발, 우비, 보조배터리, 텀블러까지... 처음 가는 분들이라면 이 정도는 꼭 챙겨가는 걸 추천합니다.",
-      place: "인천",
-      time: "3일 전",
-      likes: 12,
-      comments: 10,
-    },
-  ];
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        setLoadingReviews(true);
 
-  const filteredQuestions = questions.filter((q) =>
-    q.title.toLowerCase().includes(keyword.toLowerCase())
-  );
+        const data = await authFetch("/api/me/reviews");
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.data)
+          ? data.data
+          : [];
 
-  const filteredReviews = reviews.filter((r) =>
-    r.title.toLowerCase().includes(keyword.toLowerCase())
-  );
+        const normalized = list.map((item) => ({
+          id: item.id,
+          title: item.title || "제목 없음",
+          excerpt: item.content || "",
+          place: item.targetTitle || "축제",
+          time: item.createdAt || "",
+          likes: item.likeCount ?? 0,
+          comments: item.commentCount ?? 0,
+          rating: item.rating ?? 0,
+        }));
+
+        setReviews(normalized);
+      } catch (error) {
+        console.error("리뷰 목록 로딩 실패:", error);
+        setReviews([]);
+      } finally {
+        setLoadingReviews(false);
+      }
+    };
+
+    fetchReviews();
+  }, []);
+
+  const filteredQuestions = useMemo(() => {
+    return questions.filter((q) =>
+      q.title.toLowerCase().includes(keyword.toLowerCase())
+    );
+  }, [questions, keyword]);
+
+  const filteredReviews = useMemo(() => {
+    return reviews.filter((r) =>
+      `${r.title} ${r.excerpt} ${r.place}`
+        .toLowerCase()
+        .includes(keyword.toLowerCase())
+    );
+  }, [reviews, keyword]);
 
   const list = tab === "question" ? filteredQuestions : filteredReviews;
 
   return (
     <div className="community-page">
-      {/* 상단 헤더 */}
       <header className="community-header">
         <h1 className="community-title">
           {tab === "question" ? "질문 게시판" : "리뷰 게시판"}
@@ -88,7 +81,6 @@ export default function Community() {
         </p>
       </header>
 
-      {/* 탭 */}
       <div className="community-tabs">
         <button
           className={tab === "question" ? "active" : ""}
@@ -104,7 +96,6 @@ export default function Community() {
         </button>
       </div>
 
-      {/* 검색 + 필터 영역 */}
       <section className="community-search-row">
         <div className="community-search-box">
           <span className="search-icon">🔍</span>
@@ -132,7 +123,6 @@ export default function Community() {
         </div>
       </section>
 
-      {/* 리스트 */}
       <section className="community-list">
         {tab === "question" &&
           list.map((q) => (
@@ -178,20 +168,28 @@ export default function Community() {
                   <span className="item-tag subtle">리뷰</span>
                 </div>
                 <div className="item-meta">
+                  <span>★ {r.rating}</span>
                   <span>❤️ {r.likes}</span>
                   <span>💬 {r.comments}</span>
-                  <span>{r.time}</span>
                 </div>
               </div>
             </Link>
           ))}
 
-        {list.length === 0 && (
-          <div className="community-empty">검색 결과가 없습니다.</div>
+        {tab === "review" && loadingReviews && (
+          <div className="community-empty">리뷰를 불러오는 중입니다.</div>
+        )}
+
+        {((tab === "question" && list.length === 0) ||
+          (tab === "review" && !loadingReviews && list.length === 0)) && (
+          <div className="community-empty">
+            {tab === "question"
+              ? "등록된 질문이 없습니다."
+              : "등록된 리뷰가 없습니다."}
+          </div>
         )}
       </section>
 
-      {/* 글쓰기 버튼 */}
       <div className="community-write-btn">
         <Link to={`/community/write/${tab}`}>
           {tab === "question" ? "질문 쓰기" : "리뷰 쓰기"}

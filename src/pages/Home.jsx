@@ -6,128 +6,195 @@ import { Link } from "react-router-dom";
 
 import BenefitCard from "../components/BenefitCard.jsx";
 import { benefits } from "../data/benefits";
+import { isFestivalLiked } from "../utils/likeStorage";
+import { authFetch } from "../api/authFetch";
 import "./Home.css";
-
-
-// 파티 모집 더미 데이터
-const partyList = [
-  {
-    id: 1,
-    title: "서울 빛초롱 축제 같이 보러 갈 사람 구해요!",
-    date: "11.30 (토) 18:00",
-    place: "청계천",
-    comments: 5,
-    members: "3/5명",
-    dday: "D-3",
-  },
-  {
-    id: 2,
-    title: "부산 불꽃 축제 함께 즐길 분",
-    date: "12.03 (화) 19:30",
-    place: "광안리 해변",
-    comments: 12,
-    members: "2/4명",
-    dday: "D-6",
-  },
-  {
-    id: 3,
-    title: "현대미술 전시 관람 후 카페 가요~",
-    date: "12.05 (목) 15:00",
-    place: "국립현대미술관 서울관",
-    comments: 3,
-    members: "4/6명",
-    dday: "D-8",
-  },
-];
-
-// 커뮤니티 질문 / 리뷰 더미
-const questions = [
-  {
-    id: 1,
-    title: "한번 축제비용 적당히 어느 정도가 좋을까요?",
-    tag: "축제예산",
-    time: "2시간 전",
-    views: 128,
-  },
-  {
-    id: 2,
-    title: "부산 불꽃 축제날 예약 팁 있을까요?",
-    tag: "부산",
-    time: "어제",
-    views: 523,
-  },
-  {
-    id: 3,
-    title: "전시회 사진 촬영 가능한가요?",
-    tag: "전시예절",
-    time: "3일 전",
-    views: 159,
-  },
-];
-
-const reviews = [
-  {
-    id: 1,
-    title: "서울 한밤 페스티벌 다녀왔어요 (사진 많음)",
-    place: "서울",
-    rating: 4.5,
-    likes: 29,
-    comments: 6,
-  },
-  {
-    id: 2,
-    title: "락페스티벌 생존 팁 정리",
-    place: "인천",
-    rating: 5.0,
-    likes: 40,
-    comments: 18,
-  },
-  {
-    id: 3,
-    title: "푸드 페스티벌 먹방 투어 후기",
-    place: "경기",
-    rating: 4.0,
-    likes: 19,
-    comments: 10,
-  },
-];
-
-
 
 export default function Home() {
   const [festivals, setFestivals] = useState([]);
+  const [partyList, setPartyList] = useState([]);
+  const [questions, setQuestions] = useState([]);
+  const [reviews, setReviews] = useState([]);
 
-  // 더미 데이터 삭제 후 학생 할인 미리보기: 12개 데이터 중 앞 3개만
   const previewBenefits = benefits.slice(0, 3);
 
   useEffect(() => {
     const formatDate = (dateString) => {
-      if (!dateString) return "";
-      const date = new Date(dateString);
+      if (!dateString || String(dateString).startsWith("0000")) {
+        return "공식정보를 확인하세요";
+      }
+
+      let dateText = String(dateString);
+
+      if (dateText.includes("T")) {
+        dateText = dateText.split("T")[0];
+      }
+
+      if (dateText.length === 8) {
+        return `${dateText.slice(0, 4)}.${dateText.slice(4, 6)}.${dateText.slice(6, 8)}`;
+      }
+
+      const date = new Date(dateText);
+      if (Number.isNaN(date.getTime())) return "공식정보를 확인하세요";
+
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
       const day = String(date.getDate()).padStart(2, "0");
       return `${year}.${month}.${day}`;
     };
-    
 
     const fetchData = async () => {
-      try {
-        const response = await axios.get("http://localhost:3000/api/festivals");
+      let normalizedReviewList = [];
+      let normalizedPartyList = [];
 
-        const mappedData = response.data.slice(0, 4).map((item) => ({
-          id: item.id,
-          title: item.title,
-          period: `${formatDate(item.start_date)} - ${formatDate(item.end_date)}`,
-          place: `${item.region} ${item.location}`,
-          badge: "인기",
-          reviews: Math.floor(Math.random() * 100) + 10,
-          thumbnail_url: item.thumbnail_url,
+      // 1) 내 리뷰 / 내 파티글 먼저 불러오기
+      try {
+        const [reviewData, partyData] = await Promise.all([
+          authFetch("/api/me/reviews"),
+          authFetch("/api/me/party-posts"),
+        ]);
+
+        const reviewList = Array.isArray(reviewData)
+          ? reviewData
+          : Array.isArray(reviewData?.data)
+            ? reviewData.data
+            : [];
+
+        const partyPostList = Array.isArray(partyData)
+          ? partyData
+          : Array.isArray(partyData?.data)
+            ? partyData.data
+            : [];
+
+        normalizedReviewList = reviewList.map((review) => ({
+          ...review,
+          targetType: review.targetType || "",
+          targetTitle: review.targetTitle || "",
+          title: review.title || "",
+          content: review.content || "",
+          rating: review.rating ?? 0,
+          createdAt: review.createdAt || "",
+          likeCount: review.likeCount ?? 0,
+          commentCount: review.commentCount ?? 0,
         }));
 
-        setFestivals(mappedData);
+        normalizedPartyList = partyPostList.map((post) => ({
+          ...post,
+          id: post.id,
+          festivalTitle: post.festivalTitle || "",
+          title: post.title || "",
+          content: post.content || "",
+          region: post.region || "",
+          location: post.location || "",
+          maxPeople: post.maxPeople ?? post.maxMembers ?? 2,
+          currentPeople: post.currentPeople ?? post.currentMembers ?? 0,
+          commentCount: post.commentCount ?? 0,
+          date: post.eventDate || post.date || "일정 미정",
+          dday: post.dday || "",
+        }));
+
+        setReviews(
+          normalizedReviewList.slice(0, 3).map((item) => ({
+            id: item.id,
+            title: item.title || "제목 없음",
+            place: item.targetTitle || "축제",
+            rating: item.rating ?? 0,
+            likes: item.likeCount ?? 0,
+            comments: item.commentCount ?? 0,
+          }))
+        );
+
+        setPartyList(
+          normalizedPartyList.slice(0, 3).map((item) => ({
+            id: item.id,
+            title: item.title || "제목 없음",
+            date: item.date || "일정 미정",
+            place: item.region || item.location || item.festivalTitle || "장소 미정",
+            comments: item.commentCount ?? 0,
+            members: `${item.currentPeople ?? 0}/${item.maxPeople ?? 2}명`,
+            dday: item.dday || "",
+          }))
+        );
+
+        setQuestions([]);
       } catch (error) {
-        console.error("데이터 로딩 실패:", error);
+        console.error("내 리뷰/파티 데이터 로딩 실패:", error);
+        setReviews([]);
+        setPartyList([]);
+        setQuestions([]);
+      }
+
+      // 2) 축제 목록은 3000번 서버에서 불러오기
+      try {
+        const festivalResponse = await axios.get("http://localhost:3000/api/festivals");
+
+        const rawFestivalData = festivalResponse.data;
+        const festivalData = Array.isArray(rawFestivalData)
+          ? rawFestivalData
+          : Array.isArray(rawFestivalData?.data)
+            ? rawFestivalData.data
+            : Array.isArray(rawFestivalData?.content)
+              ? rawFestivalData.content
+              : [];
+
+        const mappedFestivals = festivalData.slice(0, 4).map((item) => {
+          const currentFestivalTitle = String(item.title || "")
+            .trim()
+            .toLowerCase();
+
+          const relatedReviews = normalizedReviewList.filter((review) => {
+            const targetType = String(review.targetType || "").trim().toLowerCase();
+            const targetTitle = String(review.targetTitle || "").trim().toLowerCase();
+            const reviewTitle = String(review.title || "").trim().toLowerCase();
+            const reviewContent = String(review.content || "").trim().toLowerCase();
+
+            return (
+              targetType === "festival" &&
+              (
+                targetTitle === currentFestivalTitle ||
+                reviewTitle.includes(currentFestivalTitle) ||
+                reviewContent.includes(currentFestivalTitle)
+              )
+            );
+          });
+
+          const relatedPartyPosts = normalizedPartyList.filter((post) => {
+            const festivalTitle = String(post.festivalTitle || "").trim().toLowerCase();
+            const postTitle = String(post.title || "").trim().toLowerCase();
+            const postContent = String(post.content || "").trim().toLowerCase();
+
+            return (
+              festivalTitle === currentFestivalTitle ||
+              postTitle.includes(currentFestivalTitle) ||
+              postContent.includes(currentFestivalTitle)
+            );
+          });
+
+          const liked = isFestivalLiked(item.id);
+
+          const isHotFestival =
+            relatedReviews.length >= 2 ||
+            relatedPartyPosts.length >= 2 ||
+            (liked && relatedReviews.length >= 1);
+
+          return {
+            id: item.id,
+            title: item.title,
+            period:
+              item.start_date || item.end_date
+                ? `${formatDate(item.start_date)} - ${formatDate(item.end_date)}`
+                : "공식정보를 확인하세요",
+            place: [item.region, item.location].filter(Boolean).join(" "),
+            thumbnail_url: item.thumbnail_url,
+            badge: isHotFestival ? "인기" : "",
+            reviews: relatedReviews.length,
+          };
+        });
+
+        setFestivals(mappedFestivals);
+      } catch (error) {
+        console.error("축제 데이터 로딩 실패:", error);
+        setFestivals([]);
       }
     };
 
@@ -148,11 +215,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 이번 주 인기 축제 */}
+      {/* 이번 주 인기 축제 <span className="section-icon">🔥</span> */}
       <section className="section section-popular">
         <div className="section-header">
           <div className="section-title">
-            <span className="section-icon">🔥</span>
+            
             <span>이번 주 인기 축제</span>
           </div>
 
@@ -162,9 +229,11 @@ export default function Home() {
         </div>
 
         <div className="card-row">
-          {festivals.map((f) => (
-            <FestivalCard key={f.id} festival={f} />
-          ))}
+          {festivals.length > 0 ? (
+            festivals.map((f) => <FestivalCard key={f.id} festival={f} />)
+          ) : (
+            <div className="community-empty">표시할 축제 정보가 없습니다.</div>
+          )}
         </div>
       </section>
 
@@ -181,20 +250,18 @@ export default function Home() {
           </Link>
         </div>
 
-        {/* 더미 제거하고 previewBenefits로 렌더링 */}
         <div className="home-student-row">
           {previewBenefits.map((b) => (
             <BenefitCard key={b.id} benefit={b} />
-            ))}
-            </div>
-
+          ))}
+        </div>
       </section>
 
-      {/* 지금 모집 중인 파티 */}
+      {/* 지금 모집 중인 파티 <span className="section-icon">👥</span> */}
       <section className="section section-parties">
         <div className="section-header">
           <div className="section-title">
-            <span className="section-icon">👥</span>
+            
             <span>지금 모집 중인 파티</span>
           </div>
 
@@ -204,22 +271,36 @@ export default function Home() {
         </div>
 
         <div className="party-list">
-          {partyList.map((p) => (
-            <div key={p.id} className="party-item">
-              <div className="party-main">
-                <h3 className="party-title">{p.title}</h3>
-                <div className="party-info">
-                  <span>{p.date}</span>
-                  <span>· {p.place}</span>
+          {partyList.length > 0 ? (
+            partyList.map((p) => (
+              <Link
+                key={p.id}
+                to={`/party/${p.id}`}
+                className="party-item"
+                style={{
+                  textDecoration: "none",
+                  color: "inherit",
+                  display: "block",
+                }}
+              >
+                <div className="party-main">
+                  <h3 className="party-title">{p.title}</h3>
+                  <div className="party-info">
+                    <span>{p.date}</span>
+                    <span>· {p.place}</span>
+                  </div>
                 </div>
-              </div>
-              <div className="party-meta">
-                <span>댓글 {p.comments}</span>
-                <span>{p.members}</span>
-                <span className="party-dday">{p.dday}</span>
-              </div>
-            </div>
-          ))}
+
+                <div className="party-meta">
+                  <span>댓글 {p.comments}</span>
+                  <span>{p.members}</span>
+                  {p.dday && <span className="party-dday">{p.dday}</span>}
+                </div>
+              </Link>
+            ))
+          ) : (
+            <div className="community-empty">현재 모집 중인 파티가 없습니다.</div>
+          )}
         </div>
       </section>
 
@@ -244,16 +325,22 @@ export default function Home() {
             </div>
 
             <ul className="community-list">
-              {questions.map((q) => (
-                <li key={q.id} className="community-item">
-                  <div className="community-title">{q.title}</div>
-                  <div className="community-meta">
-                    <span>#{q.tag}</span>
-                    <span>{q.time}</span>
-                    <span>조회 {q.views}</span>
-                  </div>
+              {questions.length > 0 ? (
+                questions.map((q) => (
+                  <li key={q.id} className="community-item">
+                    <div className="community-title">{q.title}</div>
+                    <div className="community-meta">
+                      <span>#{q.tag}</span>
+                      <span>{q.time}</span>
+                      <span>조회 {q.views}</span>
+                    </div>
+                  </li>
+                ))
+              ) : (
+                <li className="community-item">
+                  <div className="community-title">등록된 질문이 없습니다.</div>
                 </li>
-              ))}
+              )}
             </ul>
           </div>
 
@@ -262,26 +349,32 @@ export default function Home() {
             <div className="community-card-header">
               <span className="community-label">리뷰 게시판</span>
 
-              <Link to="/community" className="link-button">
+              <Link to="/community?tab=review" className="link-button">
                 더보기 →
               </Link>
             </div>
 
             <ul className="community-list">
-              {reviews.map((r) => (
-                <li key={r.id} className="review-item">
-                  <div className="review-thumb" />
-                  <div className="review-body">
-                    <div className="community-title">{r.title}</div>
-                    <div className="community-meta">
-                      <span>{r.place}</span>
-                      <span>★ {r.rating}</span>
-                      <span>좋아요 {r.likes}</span>
-                      <span>댓글 {r.comments}</span>
+              {reviews.length > 0 ? (
+                reviews.map((r) => (
+                  <li key={r.id} className="review-item">
+                    <div className="review-thumb" />
+                    <div className="review-body">
+                      <div className="community-title">{r.title}</div>
+                      <div className="community-meta">
+                        <span>{r.place}</span>
+                        <span>★ {r.rating}</span>
+                        <span>좋아요 {r.likes}</span>
+                        <span>댓글 {r.comments}</span>
+                      </div>
                     </div>
-                  </div>
+                  </li>
+                ))
+              ) : (
+                <li className="community-item">
+                  <div className="community-title">등록된 리뷰가 없습니다.</div>
                 </li>
-              ))}
+              )}
             </ul>
           </div>
         </div>

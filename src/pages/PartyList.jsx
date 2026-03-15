@@ -1,43 +1,98 @@
 // src/pages/PartyList.jsx
-import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { authFetch } from "../api/authFetch";
 import "./Party.css";
 
 export default function PartyList() {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const parties = [
-    {
-      id: "1",
-      dday: "D-6",
-      status: "신청 가능",
-      title: "홍대 페스티벌 같이 가실 분 (2/4명)",
-      festival: "2025 홍대 거리공연 축제",
-      date: "2025-12-01 18:00",
-      location: "서울 마포구",
-      currentCount: 2,
-      maxCount: 4,
-      hostName: "페스티벌러버",
-      hostLevel: "Lv.12",
-    },
-    {
-      id: "2",
-      dday: "D-2",
-      status: "신청 완료",
-      title: "부산 불꽃축제 함께 보러 가요 (3/4명)",
-      festival: "부산 불꽃축제",
-      date: "2025-11-27 19:30",
-      location: "부산 해운대구",
-      currentCount: 3,
-      maxCount: 4,
-      hostName: "불꽃사랑",
-      hostLevel: "Lv.8",
-    },
-  ];
+  const [parties, setParties] = useState([]);
+  const [regionFilter, setRegionFilter] = useState("전체");
+  const [sortType, setSortType] = useState("최신순");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchParties = async () => {
+      try {
+        const data = await authFetch("/api/me/party-posts");
+
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.data)
+          ? data.data
+          : [];
+
+        const normalized = list.map((item) => {
+          const currentCount = item.currentPeople ?? item.currentMembers ?? 0;
+          const maxCount = item.maxPeople ?? item.maxMembers ?? 2;
+          const region = item.region || "";
+          const locationText = item.location || item.festivalTitle || "장소 미정";
+
+          return {
+            id: item.id,
+            dday: item.dday || "",
+            status:
+              currentCount >= maxCount
+                ? "신청 완료"
+                : "신청 가능",
+            title: item.title || "제목 없음",
+            festival: item.festivalTitle || "축제 정보 없음",
+            date: item.eventDate || item.date || "일정 미정",
+            location: [region, locationText].filter(Boolean).join(" "),
+            currentCount,
+            maxCount,
+            hostName: item.authorNickname || item.nickname || "작성자",
+            hostLevel: item.authorLevel || "",
+            createdAt: item.createdAt || "",
+            region,
+          };
+        });
+
+        setParties(normalized);
+      } catch (error) {
+        console.error("파티 목록 로딩 실패:", error);
+        setParties([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchParties();
+  }, [location.key]);
+
+  const filteredParties = useMemo(() => {
+    let next = [...parties];
+
+    if (regionFilter !== "전체") {
+      next = next.filter((party) => {
+        const regionText = `${party.region} ${party.location}`.toLowerCase();
+        return regionText.includes(regionFilter.toLowerCase());
+      });
+    }
+
+    if (sortType === "마감 임박순") {
+      next.sort((a, b) => {
+        const getDdayNum = (value) => {
+          if (!value || !String(value).startsWith("D-")) return 9999;
+          return Number(String(value).replace("D-", "")) || 9999;
+        };
+        return getDdayNum(a.dday) - getDdayNum(b.dday);
+      });
+    } else {
+      next.sort((a, b) => {
+        const aTime = new Date(a.createdAt || 0).getTime();
+        const bTime = new Date(b.createdAt || 0).getTime();
+        return bTime - aTime;
+      });
+    }
+
+    return next;
+  }, [parties, regionFilter, sortType]);
 
   return (
     <div className="party-page">
-      {/* 상단 제목 + 버튼 */}
       <div className="party-header-row">
         <div>
           <div className="party-title">파티원 모집</div>
@@ -52,103 +107,124 @@ export default function PartyList() {
         </button>
       </div>
 
-      {/* 필터 영역 (지금은 UI만) */}
       <div className="party-filter-bar">
         <div className="party-filter-group">
           <span className="party-filter-label">지역</span>
-          <select className="party-filter-select">
+          <select
+            className="party-filter-select"
+            value={regionFilter}
+            onChange={(e) => setRegionFilter(e.target.value)}
+          >
             <option>전체</option>
             <option>서울</option>
             <option>부산</option>
+            <option>인천</option>
+            <option>경기</option>
+            <option>전라남도</option>
+            <option>전라북도</option>
+            <option>충청남도</option>
+            <option>경상북도</option>
           </select>
         </div>
 
         <div className="party-filter-group">
           <span className="party-filter-label">날짜</span>
           <div className="party-filter-chips">
-            <button className="chip chip-active">오늘</button>
-            <button className="chip">이번주</button>
-            <button className="chip">직접 선택</button>
+            <button type="button" className="chip chip-active">오늘</button>
+            <button type="button" className="chip">이번주</button>
+            <button type="button" className="chip">직접 선택</button>
           </div>
         </div>
 
         <div className="party-filter-group party-filter-group-right">
           <span className="party-filter-label">정렬</span>
-          <select className="party-filter-select">
+          <select
+            className="party-filter-select"
+            value={sortType}
+            onChange={(e) => setSortType(e.target.value)}
+          >
             <option>최신순</option>
             <option>마감 임박순</option>
           </select>
         </div>
       </div>
 
-      <div className="party-count">총 {parties.length}개의 모집글이 있습니다.</div>
+      <div className="party-count">
+        총 {filteredParties.length}개의 모집글이 있습니다.
+      </div>
 
-      {/* 카드 리스트 */}
       <div className="party-list">
-        {parties.map((party) => {
-          const progress =
-            (party.currentCount / party.maxCount) * 100;
+        {loading ? (
+          <div className="community-empty">파티 목록을 불러오는 중입니다.</div>
+        ) : filteredParties.length === 0 ? (
+          <div className="community-empty">등록된 파티 모집글이 없습니다.</div>
+        ) : (
+          filteredParties.map((party) => {
+            const progress =
+              party.maxCount > 0
+                ? (party.currentCount / party.maxCount) * 100
+                : 0;
 
-          return (
-            <Link
-              key={party.id}
-              to={`/party/${party.id}`}
-              className="party-card"
-            >
-              <div className="party-card-inner">
-                <div className="party-card-left">
-                  <div className="party-badges-row">
-                    <span className="badge-dday">{party.dday}</span>
-                    <span className="badge-status">{party.status}</span>
-                  </div>
-
-                  <div className="party-card-title">{party.title}</div>
-
-                  <div className="party-meta">
-                    <span>🎪 {party.festival}</span>
-                    <span>🕒 {party.date}</span>
-                    <span>📍 {party.location}</span>
-                  </div>
-
-                  <div className="party-progress-block">
-                    <div className="party-progress-header">
-                      <span className="party-progress-label">
-                        모집 현황
-                      </span>
-                      <span className="party-count-text">
-                        {party.currentCount}/{party.maxCount}명
-                      </span>
+            return (
+              <Link
+                key={party.id}
+                to={`/party/${party.id}`}
+                className="party-card"
+              >
+                <div className="party-card-inner">
+                  <div className="party-card-left">
+                    <div className="party-badges-row">
+                      {party.dday && <span className="badge-dday">{party.dday}</span>}
+                      <span className="badge-status">{party.status}</span>
                     </div>
-                    <div className="party-progress-bar">
-                      <div
-                        className="party-progress-fill"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                  </div>
 
-                  <div className="party-host-row">
-                    <div className="party-host">
-                      <div className="party-host-avatar">🎉</div>
-                      <div className="party-host-name">
-                        {party.hostName}
+                    <div className="party-card-title">
+                      {party.title} ({party.currentCount}/{party.maxCount}명)
+                    </div>
+
+                    <div className="party-meta">
+                      <span>🎪 {party.festival}</span>
+                      <span>🕒 {party.date}</span>
+                      <span>📍 {party.location}</span>
+                    </div>
+
+                    <div className="party-progress-block">
+                      <div className="party-progress-header">
+                        <span className="party-progress-label">모집 현황</span>
+                        <span className="party-count-text">
+                          {party.currentCount}/{party.maxCount}명
+                        </span>
                       </div>
-                      <span className="party-host-level">
-                        {party.hostLevel}
-                      </span>
+
+                      <div className="party-progress-bar">
+                        <div
+                          className="party-progress-fill"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="party-host-row">
+                      <div className="party-host">
+                        <div className="party-host-avatar">🎉</div>
+                        <div className="party-host-name">{party.hostName}</div>
+                        {party.hostLevel && (
+                          <span className="party-host-level">{party.hostLevel}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="party-card-right">
+                    <div className="party-count-text">
+                      {party.currentCount}/{party.maxCount}명
                     </div>
                   </div>
                 </div>
-
-                <div className="party-card-right">
-                  <div className="party-count-text">
-                    {party.currentCount}/{party.maxCount}명
-                  </div>
-                </div>
-              </div>
-            </Link>
-          );
-        })}
+              </Link>
+            );
+          })
+        )}
       </div>
     </div>
   );
