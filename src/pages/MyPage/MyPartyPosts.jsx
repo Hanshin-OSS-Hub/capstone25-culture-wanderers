@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { authFetch } from "../../api/authFetch";
 import "./MyPartyPosts.css";
 
@@ -63,6 +64,7 @@ function formatCreatedAt(value) {
 function normalizeParty(p) {
   return {
     ...p,
+    festivalTitle: p.festivalTitle || "",
     region: p.location || "",
     date: formatDateTimeForInput(p.meetingTime),
     capacity: p.maxPeople ?? 2,
@@ -80,6 +82,8 @@ const emptyForm = {
 };
 
 export default function MyPartyPosts() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [mode, setMode] = useState("list"); // list | create | edit
   const [editingId, setEditingId] = useState(null);
@@ -99,8 +103,8 @@ export default function MyPartyPosts() {
         const postList = Array.isArray(data)
           ? data
           : Array.isArray(data.data)
-          ? data.data
-          : [];
+            ? data.data
+            : [];
 
         const normalized = postList.map(normalizeParty);
 
@@ -137,12 +141,17 @@ export default function MyPartyPosts() {
     setForm(emptyForm);
   };
 
-  const openCreate = () => {
+  const openCreate = (preset = null) => {
     setMode("create");
     setEditingId(null);
     setForm({
       ...emptyForm,
-      date: `${formatDate()}T19:00`,
+      title: preset?.title || "",
+      region: preset?.region || "",
+      content: preset?.content || "",
+      date: preset?.date || `${formatDate()}T19:00`,
+      모집인원: preset?.모집인원 || 2,
+      contact: preset?.contact || "",
     });
   };
 
@@ -164,6 +173,22 @@ export default function MyPartyPosts() {
       content: target.content || "",
     });
   };
+
+  useEffect(() => {
+    const partyTarget = location.state;
+
+    if (!partyTarget?.fromFestival) return;
+
+    openCreate({
+      title: `${partyTarget.festivalTitle} 같이 가실 분 구해요!`,
+      region: partyTarget.region || partyTarget.location || "",
+      content: `${partyTarget.festivalTitle} 같이 가실 분 모집합니다.\n편하게 신청해주세요!`,
+      date: `${formatDate()}T19:00`,
+      모집인원: 2,
+    });
+
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.state, location.pathname, navigate]);
 
   const handleDelete = async (id) => {
     if (!window.confirm("이 모집글을 삭제할까요?")) return;
@@ -212,6 +237,8 @@ export default function MyPartyPosts() {
       currentPeople: isEditing ? editingPost?.currentPeople ?? 0 : 0,
       meetingTime: form.date,
       location: form.region.trim(),
+      festivalId: location.state?.festivalId ?? null,
+      festivalTitle: location.state?.festivalTitle ?? null,
     };
 
     try {
@@ -296,7 +323,7 @@ export default function MyPartyPosts() {
         <h2>내 파티 모집글</h2>
 
         {mode === "list" ? (
-          <button className="myposts-primary-btn" onClick={openCreate}>
+          <button className="myposts-primary-btn" onClick={() => openCreate()}>
             ✏️ 모집글 작성
           </button>
         ) : (
@@ -434,6 +461,10 @@ export default function MyPartyPosts() {
                       </span>
                     </div>
                   </div>
+
+                  {p.festivalTitle && (
+                    <div className="myposts-festival">🎉 {p.festivalTitle}</div>
+                  )}
 
                   <h3 className="myposts-card-title">{p.title}</h3>
 

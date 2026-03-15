@@ -1,35 +1,61 @@
-// src/pages/MyPage/CalendarPage.jsx
-import React, { useState } from "react";
-
-//  프론트 완성용 더미 일정
-const initialEvents = [
-  { id: 1, date: "2026-03-21", title: "벚꽃 축제(더미)" },
-  { id: 2, date: "2026-04-02", title: "재즈 페스티벌(더미)" },
-];
+import React, { useEffect, useState } from "react";
+import {
+  getCalendarEvents,
+  addCalendarEvent,
+  removeCalendarEvent,
+} from "../../utils/calendarStorage";
 
 export default function CalendarPage() {
-  const [events, setEvents] = useState(initialEvents);
+  const [events, setEvents] = useState([]);
   const [date, setDate] = useState("");
   const [title, setTitle] = useState("");
 
+  useEffect(() => {
+    const syncEvents = () => {
+      setEvents(getCalendarEvents());
+    };
+
+    syncEvents();
+    window.addEventListener("calendar-events-changed", syncEvents);
+    window.addEventListener("storage", syncEvents);
+
+    return () => {
+      window.removeEventListener("calendar-events-changed", syncEvents);
+      window.removeEventListener("storage", syncEvents);
+    };
+  }, []);
+
   const addEvent = (e) => {
     e.preventDefault();
+
     if (!date || !title.trim()) {
       alert("날짜와 제목을 입력해주세요.");
       return;
     }
-    setEvents((prev) => [
-      { id: Date.now(), date, title: title.trim() },
-      ...prev,
-    ]);
+
+    const result = addCalendarEvent({
+      date,
+      title: title.trim(),
+      location: "",
+      description: "",
+    });
+
+    if (!result.added) {
+      alert("같은 일정이 이미 등록되어 있어요.");
+      return;
+    }
+
+    setEvents(result.events);
     setDate("");
     setTitle("");
   };
 
-  const removeEvent = (id) => {
+  const handleRemoveEvent = (id) => {
     const ok = window.confirm("이 일정을 삭제할까요?");
     if (!ok) return;
-    setEvents((prev) => prev.filter((x) => x.id !== id));
+
+    const next = removeCalendarEvent(id);
+    setEvents(next);
   };
 
   return (
@@ -70,6 +96,7 @@ export default function CalendarPage() {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
+                gap: 12,
               }}
             >
               <div>
@@ -77,16 +104,36 @@ export default function CalendarPage() {
                 <div style={{ fontSize: 13, color: "#6b7280", marginTop: 2 }}>
                   {ev.date}
                 </div>
+
+                {ev.location ? (
+                  <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>
+                    📍 {ev.location}
+                  </div>
+                ) : null}
+
+                {ev.festivalPeriod ? (
+                  <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>
+                    📅 행사 기간: {ev.festivalPeriod}
+                  </div>
+                ) : null}
+
+                {ev.description ? (
+                  <div style={{ fontSize: 13, color: "#9ca3af", marginTop: 4 }}>
+                    {ev.description}
+                  </div>
+                ) : null}
               </div>
+
               <button
                 type="button"
-                onClick={() => removeEvent(ev.id)}
+                onClick={() => handleRemoveEvent(ev.id)}
                 style={{
                   height: 32,
                   borderRadius: 10,
                   border: "1px solid #f1e4ee",
                   background: "#fff",
                   cursor: "pointer",
+                  whiteSpace: "nowrap",
                 }}
               >
                 삭제

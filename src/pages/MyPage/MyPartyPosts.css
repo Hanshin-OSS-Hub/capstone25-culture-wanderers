@@ -188,3 +188,9 @@
     grid-template-columns: 1fr;
   }
 }
+
+.myposts-festival {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 4px;
+}

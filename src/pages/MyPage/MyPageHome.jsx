@@ -1,12 +1,12 @@
 // src/pages/MyPage/MyPageHome.jsx
 import React, { useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../auth/AuthContext"; // 경로 확인!
-import "./MyPage.css"; // 기존 MyPage.css 재사용
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../auth/AuthContext";
+import "./MyPage.css";
 
 export default function MyPageHome() {
   const navigate = useNavigate();
-  const { user } = useAuth(); // RequireAuth로 감싸져 있으니 여기서 user는 있다고 가정 가능
+  const { user } = useAuth();
 
   const nickname = useMemo(() => {
     if (user?.nickname) return user.nickname;
@@ -14,34 +14,18 @@ export default function MyPageHome() {
     return "유목민";
   }, [user]);
 
-  //  데모용 더미(나중에 백엔드 연결하면 여기만 교체)
+  // 더미 제거 후 실제 사용자 정보만 사용
   const profile = {
-    joinDate: "2024.03.15",
-    level: "Lv.5",
-    temperature: 36.8,
     greeting: "오늘도 문화생활, 가볍게 한 번 떠나볼까요?",
   };
 
+  // 더미 제거 후 안전하게 0 처리
   const stats = {
-    reviews: 12,
-    partyPosts: 3,
-    joinedParties: 5,
-    likedEvents: 24,
+    reviews: 0,
+    partyPosts: 0,
+    joinedParties: 0,
+    likedEvents: 0,
   };
-
-  const journey = {
-    visitedPlaces: 20,
-    milestones: [
-      { id: 1, label: "첫 발걸음", desc: "가까운 전시·축제부터 시작했어요", threshold: 1 },
-      { id: 2, label: "동네 탐험가", desc: "내가 좋아하는 동네 스폿이 생겼어요", threshold: 5 },
-      { id: 3, label: "도시 유목민", desc: "여기저기 새로운 문화 공간을 여행 중이에요", threshold: 15 },
-    ],
-  };
-
-  const currentStepIndex = journey.milestones.reduce(
-    (acc, m, idx) => (journey.visitedPlaces >= m.threshold ? idx : acc),
-    -1
-  );
 
   return (
     <section className="mypage-main">
@@ -82,16 +66,12 @@ export default function MyPageHome() {
 
               <div className="mypage-info-details">
                 <div className="mypage-info-item">
-                  <span className="label">가입일</span>
-                  <span className="value">{profile.joinDate}</span>
+                  <span className="label">이메일</span>
+                  <span className="value">{user?.email || "-"}</span>
                 </div>
                 <div className="mypage-info-item">
-                  <span className="label">활동 온도</span>
-                  <span className="value">{profile.temperature.toFixed(1)}°C</span>
-                </div>
-                <div className="mypage-info-item">
-                  <span className="label">레벨</span>
-                  <span className="value">{profile.level}</span>
+                  <span className="label">닉네임</span>
+                  <span className="value">{nickname}</span>
                 </div>
               </div>
             </div>
@@ -111,25 +91,22 @@ export default function MyPageHome() {
             </div>
 
             <p className="journey-count">
-              지금까지 <span>{journey.visitedPlaces}곳</span>의 문화 공간을 탐험했어요
+              아직 표시할 문화 여정 데이터가 없습니다.
             </p>
           </div>
 
           <div className="journey-right">
             <p className="journey-title">나의 문화 여정</p>
             <div className="journey-steps">
-              {journey.milestones.map((step, index) => (
-                <div
-                  key={step.id}
-                  className={"journey-step" + (index <= currentStepIndex ? " active" : "")}
-                >
-                  <div className="step-badge">{index + 1}</div>
-                  <div className="step-text">
-                    <div className="step-label">{step.label}</div>
-                    <div className="step-desc">{step.desc}</div>
+              <div className="journey-step">
+                <div className="step-badge">-</div>
+                <div className="step-text">
+                  <div className="step-label">데이터 준비 중</div>
+                  <div className="step-desc">
+                    방문 기록 기반 문화 여정 기능은 추후 연결 예정입니다.
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </div>
@@ -167,7 +144,7 @@ export default function MyPageHome() {
           <button
             type="button"
             className="mypage-stat-card clickable"
-            onClick={() => navigate("/mypage/parties")}  
+            onClick={() => navigate("/mypage/parties")}
           >
             <div className="stat-left">
               <div className="stat-icon">🎉</div>
@@ -191,13 +168,6 @@ export default function MyPageHome() {
             </div>
             <div className="stat-value">{stats.likedEvents}</div>
           </button>
-        </div>
-
-        {/* 아래는 선택: 퀵 링크 */}
-        <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <Link className="mypage-quick-link" to="/mypage/calendar">📅 캘린더</Link>
-          <Link className="mypage-quick-link" to="/mypage/info">✏️ 내 정보 수정</Link>
-          <Link className="mypage-quick-link" to="/mypage/withdraw">⚙️ 회원탈퇴</Link>
         </div>
       </div>
     </section>

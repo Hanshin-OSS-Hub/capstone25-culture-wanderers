@@ -1,17 +1,35 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { authFetch } from "../../api/authFetch";
 import "./ReviewWrite.css";
 
 export default function ReviewWrite() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [targetType, setTargetType] = useState("festival");
+  const [targetId, setTargetId] = useState(null);
   const [targetTitle, setTargetTitle] = useState("");
   const [title, setTitle] = useState("");
   const [rating, setRating] = useState(0);
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const reviewTarget = location.state;
+
+    if (reviewTarget?.targetType) {
+      setTargetType(reviewTarget.targetType);
+    }
+
+    if (reviewTarget?.targetId) {
+      setTargetId(reviewTarget.targetId);
+    }
+
+    if (reviewTarget?.targetTitle) {
+      setTargetTitle(reviewTarget.targetTitle);
+    }
+  }, [location.state]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,6 +41,7 @@ export default function ReviewWrite() {
 
     const payload = {
       targetType,
+      targetId,
       targetTitle: targetTitle.trim(),
       title: title.trim(),
       rating,
@@ -57,7 +76,7 @@ export default function ReviewWrite() {
           <select
             value={targetType}
             onChange={(e) => setTargetType(e.target.value)}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !!location.state?.targetType}
           >
             <option value="festival">축제</option>
             <option value="party">파티</option>
@@ -72,7 +91,7 @@ export default function ReviewWrite() {
             placeholder="이름을 입력하세요"
             value={targetTitle}
             onChange={(e) => setTargetTitle(e.target.value)}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !!location.state?.targetTitle}
           />
         </div>
 
