@@ -58,9 +58,14 @@ export default function AiChatWidget() {
 
     const regionText = region ? `${region}에서 ` : '';
     const categoryText = category ? `${category} ` : '행사 ';
-    const countText = festivals.length > 0 ? `${festivals.length}개 추천해드릴게요.` : '조건에 맞는 행사를 찾지 못했어요.';
+    const countText =
+      festivals.length > 0
+        ? `${festivals.length}개 추천해드릴게요.`
+        : '조건에 맞는 행사를 찾지 못했어요.';
 
-    return `${regionText}${companionText} ${categoryText}${countText}`.replace(/\s+/g, ' ').trim();
+    return `${regionText}${companionText} ${categoryText}${countText}`
+      .replace(/\s+/g, ' ')
+      .trim();
   };
 
   const handleSend = async () => {
@@ -105,14 +110,16 @@ export default function AiChatWidget() {
 
       setMessages((prev) => [...prev, botTextMessage, botCardMessage]);
     } catch (error) {
-      console.error('AI 챗봇 추천 오류:', error);
+      console.error("AI 추천 실패:", error);
 
-      const errorMessage = {
-        id: Date.now() + 3,
-        role: 'bot',
-        type: 'text',
-        text: '추천 결과를 불러오지 못했어요. 잠시 후 다시 시도해주세요.',
+      const failMessage = {
+        id: Date.now() + 1,
+        role: "bot",
+        type: "text",
+        text:
+          "현재 AI 추천 요청이 많아 잠시 지연되고 있어요.\n잠시 후 다시 시도해주세요 🙏",
       };
+
 
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
@@ -139,14 +146,20 @@ export default function AiChatWidget() {
     navigate(`/party/write?festivalId=${festival.id}&festivalTitle=${encodeURIComponent(festival.title)}`);
   };
 
+  const fillExamplePrompt = (text) => {
+    setInput(text);
+  };
+
   return (
     <>
       <button
         type="button"
         className="ai-chat-fab"
         onClick={() => setIsOpen((prev) => !prev)}
+        aria-label="AI 추천 도우미"
+        title="AI 추천 도우미"
       >
-        {isOpen ? '닫기' : 'AI 추천'}
+        ✨
       </button>
 
       {isOpen && (
@@ -166,14 +179,29 @@ export default function AiChatWidget() {
           </div>
 
           <div className="ai-chat-body">
-            {messages.map((message) => {
+            {messages.map((message, index) => {
               if (message.type === 'text') {
                 return (
-                  <div
-                    key={message.id}
-                    className={`ai-chat-bubble ${message.role === 'user' ? 'user' : 'bot'}`}
-                  >
-                    {message.text}
+                  <div key={message.id}>
+                    <div
+                      className={`ai-chat-bubble ${message.role === 'user' ? 'user' : 'bot'}`}
+                    >
+                      {message.text}
+                    </div>
+
+                    {index === 0 && message.role === 'bot' && messages.length === 1 && (
+                      <div className="ai-chat-suggests">
+                        <button type="button" onClick={() => fillExamplePrompt('서울 무료 축제 추천')}>
+                          서울 무료 축제
+                        </button>
+                        <button type="button" onClick={() => fillExamplePrompt('친구랑 갈 행사 추천')}>
+                          친구랑 갈 행사
+                        </button>
+                        <button type="button" onClick={() => fillExamplePrompt('이번 주 데이트 코스 추천')}>
+                          데이트 코스
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               }
@@ -230,7 +258,7 @@ export default function AiChatWidget() {
                                 className="ai-chat-btn secondary"
                                 onClick={() => goToPartyList(festival)}
                               >
-                                파티글 {festival.party_count}개 확인하러 가기
+                                파티글 {festival.party_count}개 보기
                               </button>
                             ) : (
                               <button
@@ -238,7 +266,7 @@ export default function AiChatWidget() {
                                 className="ai-chat-btn secondary"
                                 onClick={() => goToPartyWrite(festival)}
                               >
-                                파티글이 없어요 · 작성하러 가기
+                                파티 모집하기
                               </button>
                             )}
                           </div>
@@ -252,7 +280,11 @@ export default function AiChatWidget() {
               return null;
             })}
 
-            {loading && <div className="ai-chat-bubble bot">추천 내용을 정리하고 있어요...</div>}
+            {loading && (
+              <div className="ai-chat-bubble bot">
+                추천 내용을 정리하고 있어요...
+              </div>
+            )}
           </div>
 
           <div className="ai-chat-input-wrap">
@@ -260,9 +292,9 @@ export default function AiChatWidget() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKeyDown}
-              placeholder="서울에서 놀고 싶은데 친구랑 갈 만한 축제 추천해줘"
+              placeholder="예) 서울 데이트 축제 추천"
               className="ai-chat-input"
-              rows={2}
+              rows={1}
             />
             <button
               type="button"
