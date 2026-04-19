@@ -1,0 +1,127 @@
+/* =========================
+   학생 할인 grid (기존 유지)
+========================= */
+.home-student-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.home-student-row > * {
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .home-student-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .home-student-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================
+   추천 필터 UI
+========================= */
+.recommend-box {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+}
+
+.recommend-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.recommend-row span {
+  font-weight: 600;
+  min-width: 50px;
+}
+
+.recommend-row button {
+  border: 1px solid #ddd;
+  background: #fff;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.recommend-row button:hover {
+  background: #ff6b9a;
+  color: white;
+  border-color: #ff6b9a;
+}
+
+.recommend-row button.active {
+  background: #ff6b9a;
+  color: white;
+  border-color: #ff6b9a;
+}
+
+.recommend-btn {
+  margin-top: 8px;
+  background: #ff6b9a;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.recommend-btn:disabled {
+  background: #f4a5bf;
+  cursor: not-allowed;
+}
+
+/* =========================
+   파티 추천 박스
+========================= */
+.party-recommend-box {
+  background: #fff;
+  border: 1px solid #ffd8e5;
+  border-radius: 18px;
+  padding: 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 20px rgba(255, 140, 180, 0.08);
+}
+
+.party-recommend-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ff5c8a;
+  margin-bottom: 10px;
+}
+
+.party-recommend-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #555;
+  line-height: 1.8;
+}
+
+/* =========================
+   버튼 공통
+========================= */
+.link-button {
+  font-size: 14px;
+  color: #ff6b9a;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}

@@ -1,0 +1,452 @@
+/* 파티 모집 리스트 페이지 */
+
+.party-page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+/* 상단 제목 + 버튼 */
+
+.party-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.party-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ff2f78;
+  margin-bottom: 4px;
+}
+
+.party-sub {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.party-write-btn {
+  padding: 9px 22px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(90deg, #ff6fa6, #ff3f7f);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(255, 111, 166, 0.35);
+}
+
+/* 필터 바 */
+
+.party-filter-bar {
+  display: grid;
+  grid-template-columns: 2.2fr 3fr 2.2fr;
+  gap: 16px;
+  align-items: flex-end;
+  padding: 16px 20px;
+  border-radius: 18px;
+  background: #ffeef5;
+  margin-bottom: 12px;
+}
+
+.party-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.party-filter-group-right {
+  align-items: flex-end;
+}
+
+.party-filter-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.party-filter-select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid #f9cadf;
+  background: #fff;
+  font-size: 13px;
+}
+
+.party-filter-chips {
+  display: flex;
+  gap: 6px;
+}
+
+.chip {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: none;
+  font-size: 12px;
+  background: #ffe5f0;
+  color: #ff2f78;
+  cursor: pointer;
+}
+
+.chip-active {
+  background: #ff2f78;
+  color: #fff;
+}
+
+/* 개수 텍스트 */
+
+.party-count {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 10px 2px 16px;
+}
+
+/* 카드 리스트 */
+
+.party-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.party-card {
+  background: #ffeef5;
+  border-radius: 18px;
+  padding: 6px;
+}
+
+.party-card-inner {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+}
+
+.party-card-left {
+  flex: 1;
+}
+
+/* D-day & 상태 */
+
+.party-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.badge-dday {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #ffedf4;
+  color: #ff2f78;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-status {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #ffe5f0;
+  color: #ff2f78;
+  font-size: 11px;
+}
+
+/* 제목 */
+
+.party-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 10px;
+}
+
+/* 축제 정보 */
+
+.party-meta {
+  font-size: 12px;
+  color: #6b7280;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+/* 모집 현황 */
+
+.party-progress-block {
+  margin-top: 6px;
+}
+
+.party-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.party-progress-label {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.party-progress-bar {
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  overflow: hidden;
+}
+
+.party-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff6fa6, #ff3f7f);
+}
+
+/* 호스트 정보 */
+
+.party-host-row {
+  margin-top: 8px;
+}
+
+.party-host {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #4b5563;
+}
+
+.party-host-avatar {
+  font-size: 14px;
+}
+
+.party-host-name {
+  font-weight: 500;
+}
+
+.party-host-level {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fff3f7;
+  color: #ff2f78;
+}
+
+/* 오른쪽 인원 텍스트 */
+
+.party-card-right {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  min-width: 70px;
+}
+
+.party-count-text {
+  font-size: 13px;
+  color: #ff2f78;
+  font-weight: 600;
+}
+
+/* ===========================
+   3. 파티 상세 (PartyDetail)
+   =========================== */
+
+.party-detail-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+.party-back-btn {
+  border: none;
+  background: none;
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+
+.party-detail-card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(255, 111, 166, 0.18);
+  padding: 24px 28px 32px;
+}
+
+.party-detail-header {
+  border-bottom: 1px solid #f3e2eb;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.party-detail-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #374151;
+  margin: 6px 0 10px;
+}
+
+.party-detail-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 18px;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.party-detail-meta > div {
+  display: flex;
+  gap: 6px;
+}
+
+.meta-label {
+  color: #9ca3af;
+}
+
+.party-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.party-detail-section h2 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.party-detail-section p {
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.party-detail-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.party-detail-apply-btn {
+  padding: 10px 28px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(90deg, #ff6fa6, #ff3f7f);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(255, 111, 166, 0.35);
+}
+
+.section-parties .party-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.section-parties .party-item {
+  background: #ffffff;
+  border-radius: 20px; /* 다른 카드와 통일 */
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  border: 1px solid rgba(255, 182, 210, 0.5);
+  box-shadow: 0 8px 20px rgba(255, 111, 166, 0.18);
+}
+
+/* 왼쪽 영역 */
+.section-parties .party-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.section-parties .party-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.section-parties .party-info {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* 오른쪽 메타 */
+.section-parties .party-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* D-day 뱃지 */
+.section-parties .party-dday {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #ffe0ef;
+  color: #ff2f78;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+/* ===========================
+   파티 상세 상단 - 관련 축제 카드
+   =========================== */
+
+.party-festival-section {
+  margin-bottom: 18px;
+}
+
+.party-festival-card {
+  border-radius: 20px;
+  padding: 18px 22px;
+  background: linear-gradient(135deg, #ffd1e8, #ffcab2, #ff9fd0);
+  color: #ffffff;
+  box-shadow: 0 10px 26px rgba(255, 111, 166, 0.3);
+}
+
+.party-festival-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.26);
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+
+.party-festival-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.party-festival-meta {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-bottom: 10px;
+}
+
+.party-festival-link-btn {
+  border: none;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 12px;
+  color: #ffffff;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}

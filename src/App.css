@@ -1,0 +1,835 @@
+#root {
+  margin: 0;
+  padding: 0;
+  max-width: 100%;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+
+/* 상세 페이지 전체 레이아웃 */
+.detail-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  text-align: left; /* 글자 왼쪽 정렬 */
+  font-family: 'Pretendard', sans-serif;
+  color: #333;
+}
+
+/* 뒤로가기 버튼 */
+.back-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #666;
+  cursor: pointer;
+  margin-bottom: 20px;
+  padding: 0;
+}
+
+/* 흰색 카드 박스 */
+.detail-main-card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  overflow: hidden;
+  padding: 40px;
+  margin-bottom: 30px;
+}
+
+/* 상단 영역 (이미지 + 정보) */
+.detail-top {
+  display: flex;
+  gap: 40px;
+}
+
+/* 포스터 틀 (회색 배경) */
+.detail-poster {
+  width: 360px;
+  height: 480px;
+  border-radius: 12px;
+  background-color: #f8f9fa; /* 빈 공간 회색 */
+  overflow: hidden;
+  
+  /* 내부 이미지 중앙 정렬 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  flex-shrink: 0;
+}
+
+.detail-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; 
+  display: block;
+}
+
+/* 오른쪽 정보 영역 */
+.detail-summary {
+  flex: 1;
+}
+
+.detail-title {
+  font-size: 32px;
+  font-weight: 800;
+  margin: 0 0 16px 0;
+  line-height: 1.3;
+}
+
+.detail-tags {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 30px;
+}
+
+.badge-outline {
+  border: 1px solid #ddd;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  color: #666;
+  background: white;
+}
+
+.detail-info-list {
+  margin-bottom: 30px;
+}
+
+.detail-info-list div {
+  display: flex;
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+
+.detail-info-list dt {
+  width: 100px;
+  color: #888;
+  font-weight: 500;
+}
+
+.detail-info-list dd {
+  font-weight: 600;
+  margin: 0;
+}
+
+/* 가격 박스 */
+.detail-price-box {
+  background: #f9f9f9;
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.detail-price-box h2 {
+  font-size: 16px;
+  margin: 0 0 16px 0;
+}
+
+.detail-price-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 15px;
+}
+
+.detail-price-link {
+  background: none;
+  border: none;
+  color: #ff5f5f;
+  font-weight: bold;
+  padding: 0;
+  margin-top: 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.detail-reserve-btn {
+  width: 100%;
+  padding: 18px;
+  background: #ff5f5f;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.detail-reserve-btn:hover {
+  background: #e04545;
+}
+
+/* 하단 설명 영역 */
+.detail-bottom-card {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+.detail-tabs {
+  display: flex;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 30px;
+}
+
+.detail-tab {
+  padding: 15px 30px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #888;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.detail-tab.active {
+  color: #333;
+  border-bottom: 3px solid #333;
+}
+
+.detail-section h3 {
+  font-size: 20px;
+  margin: 0 0 20px 0;
+  border-left: 4px solid #ff5f5f;
+  padding-left: 12px;
+}
+
+.detail-desc-text {
+  line-height: 1.8;
+  color: #555;
+  font-size: 16px;
+}
+
+.detail-soft-box {
+  background: #fff0f0;
+  padding: 30px;
+  border-radius: 12px;
+  margin-top: 30px;
+}
+
+/* 모바일 화면 대응 */
+@media (max-width: 768px) {
+  .detail-top {
+    flex-direction: column;
+  }
+  .detail-poster {
+    width: 100%;
+    height: 350px; /* 모바일에서는 높이 조금 줄임 */
+  }
+}
+
+/* --- 검색 페이지 레이아웃 --- */
+.search-page-wrapper {
+  display: flex;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  gap: 30px;
+  font-family: 'Pretendard', sans-serif;
+}
+
+/* 1. 왼쪽 사이드바 */
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+}
+
+.filter-box {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  border: 1px solid #eee;
+}
+
+.filter-group {
+  margin-bottom: 24px;
+}
+
+.filter-group h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #333;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  margin-bottom: 20px;
+  cursor: pointer;
+}
+
+.range-slider {
+  width: 100%;
+  accent-color: #ff5f5f;
+}
+
+.range-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #888;
+  margin-top: 5px;
+}
+
+.filter-select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  color: #555;
+}
+
+.radio-group label, .tag-group label {
+  display: block;
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.reset-btn {
+  width: 100%;
+  padding: 10px;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 8px;
+  color: #666;
+  cursor: pointer;
+}
+
+/* 2. 오른쪽 메인 컨텐츠 */
+.search-content {
+  flex: 1;
+}
+
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.total-count {
+  font-size: 14px;
+  color: #666;
+}
+
+.sort-select {
+  border: 1px solid #ddd;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: white;
+  font-size: 13px;
+  color: #555;
+}
+
+/* 그리드 레이아웃 */
+.modern-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 24px;
+}
+
+.modern-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+/* 3. 카드 디자인 */
+.modern-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #f0f0f0;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.modern-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+}
+
+.card-image-area {
+  height: 180px;
+  background-color: #ffcccc; /* 이미지가 없을 때 분홍색 배경 */
+  position: relative;
+  overflow: hidden;
+}
+
+.card-image-area img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.no-image-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+}
+
+.card-badge {
+  position: absolute;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: bold;
+}
+
+.card-badge.category {
+  top: 12px;
+  left: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+}
+
+.card-badge.student {
+  top: 12px;
+  right: 12px;
+  background: #ff5f5f;
+  color: white;
+}
+
+.card-info-area {
+  padding: 16px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0 0 8px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-date, .card-location {
+  font-size: 12px;
+  color: #888;
+  margin: 0 0 4px 0;
+}
+
+.card-bottom-row {
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-price {
+  font-weight: bold;
+  font-size: 14px;
+  color: #333;
+}
+
+.card-stats {
+  font-size: 11px;
+  color: #888;
+  display: flex;
+  gap: 8px;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .search-page-wrapper {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+  }
+}
+
+/* =========================================
+   Home.jsx 스타일
+   ========================================= */
+
+/* 1. 히어로 섹션 (핑크 배경) */
+.hero {
+  background: linear-gradient(135deg, #dcb0bc 0%, #e8c3cd 100%);
+  padding: 80px 20px;
+  text-align: center;
+  color: white;
+  margin-bottom: 50px;
+}
+
+.hero-title {
+  font-size: 36px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.hero-subtitle {
+  font-size: 16px;
+  opacity: 0.95;
+  margin-bottom: 40px;
+}
+
+/* 검색창 패널 */
+.search-panel {
+  background: white;
+  max-width: 700px;
+  margin: 0 auto;
+  border-radius: 50px;
+  padding: 8px;
+  display: flex;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.search-inputs {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+}
+
+.search-select, .search-input {
+  border: none;
+  background: none;
+  font-size: 14px;
+  color: #555;
+  outline: none;
+  width: 100%;
+  cursor: pointer;
+}
+
+.divider {
+  width: 1px;
+  height: 20px;
+  background-color: #ddd;
+  margin: 0 15px;
+}
+
+.search-btn {
+  background-color: #c08a98;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 40px;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* 2. 섹션 공통 */
+.section {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px 80px 20px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.section-title {
+  font-size: 22px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.link-button {
+  font-size: 14px;
+  color: #ff5f5f;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* 3. 축제 카드 (인기 축제) */
+.card-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 24px;
+}
+
+.card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.festival-card {
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.festival-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+}
+
+.card-thumb {
+  height: 150px;
+  background: #fcecef;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.no-image {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+}
+
+.card-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: #ff5f5f;
+  color: white;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: bold;
+}
+
+.card-body {
+  padding: 16px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0 0 8px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-info {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.card-bottom {
+  font-size: 12px;
+  color: #999;
+}
+
+/* 4. 학생 할인 카드 */
+.student-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.student-card {
+  background: #fdfdfd;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  padding: 24px;
+  transition: transform 0.2s;
+}
+
+.student-card:hover {
+  transform: translateY(-3px);
+  border-color: #ffcccc;
+}
+
+.student-tag {
+  display: inline-block;
+  background: #ffeff2;
+  color: #ff5f5f;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.student-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0 0 8px 0;
+}
+
+.student-desc {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.student-meta {
+  font-size: 13px;
+  color: #888;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.student-link {
+  background: none;
+  border: none;
+  color: #ff5f5f;
+  font-weight: bold;
+  padding: 0;
+  margin-top: 16px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* 5. 파티 리스트 */
+.party-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.party-item {
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.party-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0 0 6px 0;
+}
+
+.party-info {
+  font-size: 13px;
+  color: #888;
+}
+
+.party-meta {
+  text-align: right;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.party-dday {
+  background: #333;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+/* 6. 커뮤니티 */
+.community-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.community-card {
+  background: #fafafa;
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.community-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #eee;
+}
+
+.community-label {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.community-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.community-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+.community-item:last-child {
+  border-bottom: none;
+}
+
+.community-title {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 10px;
+}
+
+.community-meta {
+  color: #888;
+  font-size: 12px;
+  white-space: nowrap;
+  display: flex;
+  gap: 8px;
+}
