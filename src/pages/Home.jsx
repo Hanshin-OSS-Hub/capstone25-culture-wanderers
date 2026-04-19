@@ -244,109 +244,104 @@ export default function Home() {
             조건만 선택하면 맞춤 행사를 추천해드려요
           </p>
 
-          <div className="recommend-box">
-            <div className="recommend-row">
-              <span>지역</span>
-              <button
-                type="button"
-                className={recommendRegion === "서울" ? "active" : ""}
-                onClick={() =>
-                  setRecommendRegion((prev) => (prev === "서울" ? "" : "서울"))
-                }
-              >
-                서울
-              </button>
-              <button
-                type="button"
-                className={recommendRegion === "경기" ? "active" : ""}
-                onClick={() =>
-                  setRecommendRegion((prev) => (prev === "경기" ? "" : "경기"))
-                }
-              >
-                경기
-              </button>
-              <button
-                type="button"
-                className={recommendRegion === "부산" ? "active" : ""}
-                onClick={() =>
-                  setRecommendRegion((prev) => (prev === "부산" ? "" : "부산"))
-                }
-              >
-                부산
-              </button>
-            </div>
+<div className="recommend-box">
+  <div className="recommend-group">
+    <div className="recommend-label">지역</div>
+    <div className="recommend-row">
+      <button
+        type="button"
+        className={recommendRegion === "서울" ? "active" : ""}
+        onClick={() => setRecommendRegion((prev) => (prev === "서울" ? "" : "서울"))}
+      >
+        서울
+      </button>
+      <button
+        type="button"
+        className={recommendRegion === "경기" ? "active" : ""}
+        onClick={() => setRecommendRegion((prev) => (prev === "경기" ? "" : "경기"))}
+      >
+        경기
+      </button>
+      <button
+        type="button"
+        className={recommendRegion === "인천" ? "active" : ""}
+        onClick={() => setRecommendRegion((prev) => (prev === "인천" ? "" : "인천"))}
+      >
+        인천
+      </button>
+      <button
+        type="button"
+        className={recommendRegion === "부산" ? "active" : ""}
+        onClick={() => setRecommendRegion((prev) => (prev === "부산" ? "" : "부산"))}
+      >
+        부산
+      </button>
+    </div>
+  </div>
 
-            <div className="recommend-row">
-              <span>예산</span>
-              <button
-                type="button"
-                className={recommendBudget === "무료" ? "active" : ""}
-                onClick={() =>
-                  setRecommendBudget((prev) => (prev === "무료" ? "" : "무료"))
-                }
-              >
-                무료
-              </button>
-              <button
-                type="button"
-                className={recommendBudget === "1만원 이하" ? "active" : ""}
-                onClick={() =>
-                  setRecommendBudget((prev) => (prev === "1만원 이하" ? "" : "1만원 이하"))
-                }
-              >
-                1만원 이하
-              </button>
-              <button
-                type="button"
-                className={recommendBudget === "3만원 이하" ? "active" : ""}
-                onClick={() =>
-                  setRecommendBudget((prev) => (prev === "3만원 이하" ? "" : "3만원 이하"))
-                }
-              >
-                3만원 이하
-              </button>
-            </div>
+  <div className="recommend-group">
+    <div className="recommend-label">예산</div>
+    <div className="recommend-row">
+      <button
+        type="button"
+        className={recommendBudget === "무료" ? "active" : ""}
+        onClick={() => setRecommendBudget((prev) => (prev === "무료" ? "" : "무료"))}
+      >
+        무료
+      </button>
+      <button
+        type="button"
+        className={recommendBudget === "1만원 이하" ? "active" : ""}
+        onClick={() => setRecommendBudget((prev) => (prev === "1만원 이하" ? "" : "1만원 이하"))}
+      >
+        1만원 이하
+      </button>
+      <button
+        type="button"
+        className={recommendBudget === "3만원 이하" ? "active" : ""}
+        onClick={() => setRecommendBudget((prev) => (prev === "3만원 이하" ? "" : "3만원 이하"))}
+      >
+        3만원 이하
+      </button>
+    </div>
+  </div>
 
-            <div className="recommend-row">
-              <span>동행</span>
-              <button
-                type="button"
-                className={recommendCompanion === "혼자" ? "active" : ""}
-                onClick={() =>
-                  setRecommendCompanion((prev) => (prev === "혼자" ? "" : "혼자"))
-                }
-              >
-                혼자
-              </button>
-              <button
-                type="button"
-                className={recommendCompanion === "친구" ? "active" : ""}
-                onClick={() =>
-                  setRecommendCompanion((prev) => (prev === "친구" ? "" : "친구"))
-                }
-              >
-                친구
-              </button>
-              <button
-                type="button"
-                className={recommendCompanion === "데이트" ? "active" : ""}
-                onClick={() =>
-                  setRecommendCompanion((prev) => (prev === "데이트" ? "" : "데이트"))
-                }
-              >
-                데이트
-              </button>
-            </div>
+  <div className="recommend-group">
+    <div className="recommend-label">동행</div>
+    <div className="recommend-row">
+      <button
+        type="button"
+        className={recommendCompanion === "혼자" ? "active" : ""}
+        onClick={() => setRecommendCompanion((prev) => (prev === "혼자" ? "" : "혼자"))}
+      >
+        혼자
+      </button>
+      <button
+        type="button"
+        className={recommendCompanion === "친구" ? "active" : ""}
+        onClick={() => setRecommendCompanion((prev) => (prev === "친구" ? "" : "친구"))}
+      >
+        친구
+      </button>
+      <button
+        type="button"
+        className={recommendCompanion === "데이트" ? "active" : ""}
+        onClick={() => setRecommendCompanion((prev) => (prev === "데이트" ? "" : "데이트"))}
+      >
+        데이트
+      </button>
+    </div>
+  </div>
 
-            <button
-              type="button"
-              className="recommend-btn"
-              onClick={handleRecommend}
-              disabled={!recommendRegion && !recommendBudget && !recommendCompanion}
-            >
-              추천받기
-            </button>
-          </div>
+    <button
+      type="button"
+      className="recommend-btn"
+      onClick={handleRecommend}
+      disabled={!recommendRegion && !recommendBudget && !recommendCompanion}
+    >
+      추천받기
+    </button>
+    </div>
 
           <SearchPanel />
         </div>
