@@ -131,7 +131,7 @@ export default function Detail() {
   useEffect(() => {
     const fetchDetail = async () => {
       try {
-        const festivalRes = await axios.get(`http://localhost:3000/api/festivals/${id}`);
+        const festivalRes = await axios.get(`http://localhost:8080/api/festivals/${id}`);
         const festivalData = festivalRes.data;
 
         setFestival(festivalData);

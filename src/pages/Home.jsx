@@ -129,7 +129,7 @@ export default function Home() {
       }
 
       try {
-        const festivalResponse = await axios.get("http://localhost:3000/api/festivals");
+        const festivalResponse = await axios.get('http://localhost:8080/api/festivals');
 
         const rawFestivalData = festivalResponse.data;
         const festivalData = Array.isArray(rawFestivalData)

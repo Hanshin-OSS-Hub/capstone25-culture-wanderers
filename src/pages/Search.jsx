@@ -106,15 +106,16 @@ const Search = () => {
       try {
         const hasQuery = search && search.trim() !== '';
         const url = hasQuery
-          ? `http://localhost:3000/api/festivals/search${search}`
-          : 'http://localhost:3000/api/festivals';
+          ? `http://localhost:8080/api/festivals/search${search}`
+          : `http://localhost:8080/api/festivals`;
 
         const response = await axios.get(url);
-        const normalFestivals = Array.isArray(response.data)
+
+        const normalizedFestivals = Array.isArray(response.data)
           ? response.data.map(normalizeFestival)
           : [];
 
-        setFestivals(normalFestivals);
+        setFestivals(normalizedFestivals);
       } catch (error) {
         console.error('에러:', error);
         setFestivals([]);
@@ -589,13 +590,13 @@ const Search = () => {
           q ||
           freeOnlyState ||
           maxPriceState < 50000) && (
-          <div style={{ marginBottom: 12, color: '#666', fontSize: 14 }}>
-            적용 조건: {selectedRegion} / {selectedCategory}
-            {selectedDate ? ` / ${selectedDate}` : ''}
-            {q ? ` / "${q}"` : ''}
-            {freeOnlyState ? ` / 무료만` : ` / 0원~${formatWon(maxPriceState)}`}
-          </div>
-        )}
+            <div style={{ marginBottom: 12, color: '#666', fontSize: 14 }}>
+              적용 조건: {selectedRegion} / {selectedCategory}
+              {selectedDate ? ` / ${selectedDate}` : ''}
+              {q ? ` / "${q}"` : ''}
+              {freeOnlyState ? ` / 무료만` : ` / 0원~${formatWon(maxPriceState)}`}
+            </div>
+          )}
 
         {loading ? (
           <p>로딩 중...</p>
@@ -608,8 +609,8 @@ const Search = () => {
                 <div className="modern-card">
                   <Link to={`/detail/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                     <div className="card-image-area">
-                      {item.thumbnail_url ? (
-                        <img src={item.thumbnail_url} alt={item.title} />
+                      {item.thumbnail_url || item.thumbnailUrl ? (
+                        <img src={item.thumbnail_url || item.thumbnailUrl} alt={item.title} />
                       ) : (
                         <div className="no-image-placeholder" />
                       )}

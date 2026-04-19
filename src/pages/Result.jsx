@@ -40,7 +40,7 @@ export default function Result() {
     const fetchResults = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`http://localhost:3000/api/festivals/search${search}`);
+        const res = await axios.get(`http://localhost:8080/api/festivals/search${search}`);
         setResults(Array.isArray(res.data) ? res.data : []);
       } catch (e) {
         console.error("검색 결과 불러오기 실패:", e);
