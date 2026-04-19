@@ -44,6 +44,26 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+// @Configuration
+// public class SecurityConfig {
+//
+//     @Bean
+//     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+//         http
+//             .csrf(csrf -> csrf.disable())
+//             .authorizeHttpRequests(auth -> auth
+//                 .anyRequest().permitAll()
+//             );
+//
+//         return http.build();
+//     }
+//
+//     @Bean
+//     public PasswordEncoder passwordEncoder() {
+//         return new BCryptPasswordEncoder();
+//     }
+// }
+
 @Configuration
 public class SecurityConfig {
 
@@ -70,6 +90,9 @@ public class SecurityConfig {
                     "/api/ai/**",
                     "/h2-console/**"
                 ).permitAll()
+                // 4/19 축제 조회/검색 API는 비로그인 접근 허용
+                .requestMatchers(HttpMethod.GET, "/api/festivals").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/festivals/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/party-posts/festival/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/party-posts/festival-title").permitAll()
                 .anyRequest().authenticated()
