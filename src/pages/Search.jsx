@@ -105,9 +105,7 @@ const Search = () => {
 
       try {
         const hasQuery = search && search.trim() !== '';
-        const url = hasQuery
-          ? `http://localhost:8080/api/festivals/search${search}`
-          : `http://localhost:8080/api/festivals`;
+        const url = `http://localhost:8080/api/festivals${search || ''}`;
 
         const response = await axios.get(url);
 
