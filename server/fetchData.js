@@ -7,40 +7,35 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 4/19 server 폴더에서 실행해도 루트 .env를 읽도록 수정
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const dbConfig = {
     host: 'localhost',
-    user: 'appuser',
-    password: '1234',
+    user: 'root',
+    password: 'Project2025!',
     database: 'culture_wanderers'
 };
 
-// 4/19 API 호출 간격 제어용 sleep 함수
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-// 4/19 서비스키를 환경변수에서 읽도록 수정
 const SERVICE_KEY = process.env.SERVICE_KEY;
 
-console.log('SERVICE_KEY loaded:', !!SERVICE_KEY);
-console.log('SERVICE_KEY preview:', SERVICE_KEY ? SERVICE_KEY.slice(0, 10) + '...' : 'undefined');
+const cleanText = (text) => {
+    if (!text) return "";
+    return text.replace(/<br\s*\/?>/gi, "\n").replace(/(<([^>]+)>)/gi, "").trim();
+};
 
-// 4/19 공공데이터 API 429 대응용 재시도 함수
-async function getWithRetry(url, maxRetry = 3, delay = 3000) {
+async function getWithRetry(url, maxRetry = 3, delay = 5000) {
     for (let attempt = 1; attempt <= maxRetry; attempt++) {
         try {
             return await axios.get(url);
         } catch (error) {
             const status = error?.response?.status;
-
             if (status === 429 && attempt < maxRetry) {
                 console.log(`  - 429 발생, ${delay}ms 후 재시도 (${attempt}/${maxRetry})`);
                 await sleep(delay);
                 delay *= 2;
                 continue;
             }
-
             throw error;
         }
     }
@@ -48,7 +43,6 @@ async function getWithRetry(url, maxRetry = 3, delay = 3000) {
 
 async function getCultureData() {
     let connection;
-
     try {
         console.log("DB 연결 시도 중...");
         connection = await mysql.createConnection(dbConfig);
@@ -56,173 +50,111 @@ async function getCultureData() {
 
         const today = new Date().toISOString().slice(0, 10).replace(/-/g, "");
 
-        const url = `http://apis.data.go.kr/B551011/KorService2/searchFestival2?serviceKey=${encodeURIComponent(SERVICE_KEY)}&numOfRows=100&pageNo=1&MobileOS=ETC&MobileApp=AppTest&_type=json&eventStartDate=${today}&arrange=R`;
+        const taskList = [
+            { type: '15', catName: '축제', url: `http://apis.data.go.kr/B551011/KorService2/searchFestival2?serviceKey=${encodeURIComponent(SERVICE_KEY)}&numOfRows=300&pageNo=1&MobileOS=ETC&MobileApp=AppTest&_type=json&eventStartDate=${today}&arrange=R` },
+            { type: '14', catName: '전시', url: `http://apis.data.go.kr/B551011/KorService2/areaBasedList2?serviceKey=${encodeURIComponent(SERVICE_KEY)}&numOfRows=300&pageNo=1&MobileOS=ETC&MobileApp=AppTest&_type=json&contentTypeId=14&arrange=R` }
+        ];
 
-        const res = await getWithRetry(url, 3, 5000);
-        const items = res.data?.response?.body?.items?.item || [];
-        const list = Array.isArray(items) ? items : [items];
+        for (const task of taskList) {
+            console.log(`\n--- [${task.catName}] 정밀 수집 시작 ---`);
+            const res = await getWithRetry(task.url);
+            const items = res.data?.response?.body?.items?.item || [];
+            const list = Array.isArray(items) ? items : [items];
 
-        console.log(`총 ${list.length}개 축제 데이터 수집 시작`);
+            for (const item of list) {
+                if (!item?.contentid) continue;
+                console.log(`[작업 시작] ${item.title}`);
 
-        for (const item of list) {
-            if (!item?.contentid) continue;
+                let price = "정보 없음", tel = item.tel || "정보 없음", finalDescription = "", homepage_url = "";
+                let timeInfo = "", restInfo = "", programInfo = "", overviewDesc = "";
+                let thumbnail = item.firstimage || null;
+                const title = item.title || "";
+                const region = (item.addr1 || "기타").split(" ")[0];
+                const location = item.addr1 || "장소 미정";
+                const startDate = item.eventstartdate || today;
+                const endDate = item.eventenddate || null;
 
-            console.log(`\n[작업 시작] ${item.title}`);
+                try {
+                    await sleep(3500);
 
-            let price = "정보 없음";
-            let tel = item.tel || "정보 없음";
-            let desc = "상세 정보 준비 중";
-            let homepage = "";
-            let thumbnail = item.firstimage || null;
-            const title = item.title || "제목 없음";
-            const region = (item.addr1 || "기타").split(" ")[0];
-            const location = item.addr1 || "장소 미정";
-            const startDate = item.eventstartdate || null;
-            const endDate = item.eventenddate || null;
-            const category = "축제";
+                    const introUrl = `http://apis.data.go.kr/B551011/KorService2/detailIntro2?serviceKey=${encodeURIComponent(SERVICE_KEY)}&MobileOS=ETC&MobileApp=AppTest&_type=json&contentId=${item.contentid}&contentTypeId=${task.type}`;
+                    const introRes = await getWithRetry(introUrl);
+                    const introRaw = introRes.data?.response?.body?.items?.item;
+                    const intro = Array.isArray(introRaw) ? introRaw[0] : introRaw;
 
-            try {
-                await sleep(3000);
-
-                // 1. Intro API
-                const introUrl = `http://apis.data.go.kr/B551011/KorService2/detailIntro2?serviceKey=${encodeURIComponent(SERVICE_KEY)}&MobileOS=ETC&MobileApp=AppTest&_type=json&contentId=${item.contentid}&contentTypeId=15`;
-                const introRes = await getWithRetry(introUrl, 3, 5000);
-                const introRaw = introRes.data?.response?.body?.items?.item;
-                const intro = Array.isArray(introRaw) ? introRaw[0] : introRaw;
-
-                if (intro) {
-                    price = intro.usetimefestival || price;
-                    tel = intro.infocentre || tel;
-
-                    if (intro.program) {
-                        desc = intro.program;
-                        console.log("  - Intro에서 프로그램 정보 추출 성공");
+                    if (intro) {
+                        if (task.type === '14') {
+                            timeInfo = cleanText(intro.usetimeculture);
+                            restInfo = cleanText(intro.restdateculture || intro.restdate);
+                            price = cleanText(intro.usefee) || price;
+                        } else {
+                            price = cleanText(intro.usetimefestival) || price;
+                            if (intro.program) programInfo = cleanText(intro.program);
+                        }
+                        tel = intro.infocentre || intro.infocenterculture || tel;
                     }
+
+                    await sleep(3500);
+
+                    const commonUrl = `http://apis.data.go.kr/B551011/KorService2/detailCommon2?serviceKey=${encodeURIComponent(SERVICE_KEY)}&MobileOS=ETC&MobileApp=AppTest&_type=json&contentId=${item.contentid}&defaultYN=Y&firstImageYN=Y&overviewYN=Y&homepageYN=Y`;
+                    const commonRes = await getWithRetry(commonUrl);
+                    const commonRaw = commonRes.data?.response?.body?.items?.item;
+                    const common = Array.isArray(commonRaw) ? commonRaw[0] : commonRaw;
+
+                    if (common) {
+                        homepage_url = common.homepage || "";
+                        overviewDesc = cleanText(common.overview);
+                        if (!thumbnail || thumbnail === "null") {
+                            thumbnail = common.firstimage || common.firstimage2 || null;
+                        }
+                    }
+
+                    if (task.type === '14') {
+                        let displayInfo = "";
+                        if (timeInfo) displayInfo += `🕒 이용시간: ${timeInfo}\n`;
+                        if (restInfo) displayInfo += `❌ 휴무일: ${restInfo}\n`;
+                        if (price && price !== "정보 없음") displayInfo += `💰 요금: ${price}\n`;
+                        if (displayInfo) displayInfo += `\n--------------------------\n\n`;
+                        finalDescription = displayInfo + (overviewDesc || "");
+                    } else {
+                        finalDescription = programInfo || overviewDesc || "";
+                    }
+
+                } catch (apiErr) {
+                    console.error(`  - API 상세 수집 실패: ${apiErr.message}`);
                 }
 
-                await sleep(3000);
-
-                // 2. Common API
-                const commonUrl = `http://apis.data.go.kr/B551011/KorService2/detailCommon2?serviceKey=${encodeURIComponent(SERVICE_KEY)}&MobileOS=ETC&MobileApp=AppTest&_type=json&contentId=${item.contentid}&defaultYN=Y&firstImageYN=Y&overviewYN=Y&homepageYN=Y`;
-                const commonRes = await getWithRetry(commonUrl, 3, 5000);
-                const commonRaw = commonRes.data?.response?.body?.items?.item;
-                const common = Array.isArray(commonRaw) ? commonRaw[0] : commonRaw;
-
-                // 핵심 수정:
-                // overview가 없어도 homepage는 따로 저장되게 분리
-                if (common) {
-                    if (common.homepage) {
-                        homepage = common.homepage;
-                        console.log("  - Common에서 홈페이지 수집 성공");
-                    }
-
-                    if (common.overview) {
-                        desc = common.overview;
-                        console.log("  - Common에서 상세 설명(overview) 수집 성공");
-                    }
-
-                    if (common.firstimage && !thumbnail) {
-                        thumbnail = common.firstimage;
-                    }
-                }
-
-            } catch (apiErr) {
-                console.error(`  - API 수집 중 일부 실패: ${apiErr.message}`);
-            }
-
-            try {
-                const [existingRows] = await connection.execute(
-                    `
-                    SELECT id, homepage_url
-                    FROM festivals
-                    WHERE title = ? AND start_date = ? AND location = ?
-                    LIMIT 1
-                    `,
-                    [title, startDate, location]
-                );
-
-                if (existingRows.length > 0) {
-                    const existing = existingRows[0];
-
-                    const finalHomepage =
-                        existing.homepage_url && existing.homepage_url.trim() !== ''
-                            ? existing.homepage_url
-                            : (homepage || '');
-
-                    await connection.execute(
-                        `
-                        UPDATE festivals
-                        SET region = ?,
-                            end_date = ?,
-                            thumbnail_url = ?,
-                            category = ?,
-                            price = ?,
-                            description = ?,
-                            tel = ?,
-                            homepage_url = ?
-                        WHERE id = ?
-                        `,
-                        [
-                            region,
-                            endDate,
-                            thumbnail,
-                            category,
-                            String(price),
-                            String(desc),
-                            String(tel),
-                            String(finalHomepage),
-                            existing.id
-                        ]
+                try {
+                    const [existing] = await connection.execute(
+                        `SELECT id FROM festivals WHERE title = ? AND start_date = ? LIMIT 1`,
+                        [title, startDate]
                     );
 
-                    console.log(`  - 기존 데이터 UPDATE 완료 (id: ${existing.id})`);
-                } else {
-                    await connection.execute(
-                        `
-                        INSERT INTO festivals
-                        (
-                            title,
-                            region,
-                            location,
-                            start_date,
-                            end_date,
-                            thumbnail_url,
-                            category,
-                            price,
-                            description,
-                            tel,
-                            homepage_url
-                        )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        `,
-                        [
-                            title,
-                            region,
-                            location,
-                            startDate,
-                            endDate,
-                            thumbnail,
-                            category,
-                            String(price),
-                            String(desc),
-                            String(tel),
-                            String(homepage || '')
-                        ]
-                    );
+                    const dbThumbnail = (thumbnail && thumbnail !== "null") ? thumbnail : null;
 
-                    console.log(`  - 신규 데이터 INSERT 완료`);
+                    if (existing.length > 0) {
+                        await connection.execute(
+                            `UPDATE festivals SET region=?, end_date=?, thumbnail_url=?, category=?, price=?, description=?, tel=?, homepage_url=?, location=? WHERE id=?`,
+                            [region, endDate, dbThumbnail, task.catName, String(price), String(finalDescription), String(tel), String(homepage_url), location, existing[0].id]
+                        );
+                        console.log(`  - [성공] 업데이트 완료: ${title}`);
+                    } else {
+                        await connection.execute(
+                            `INSERT INTO festivals (title, region, location, start_date, end_date, thumbnail_url, category, price, description, tel, homepage_url) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+                            [title, region, location, startDate, endDate, dbThumbnail, task.catName, String(price), String(finalDescription), String(tel), String(homepage_url)]
+                        );
+                        console.log(`  - [성공] 신규 추가 완료: ${title}`);
+                    }
+                } catch (dbErr) {
+                    console.error(`  - DB 작업 실패: ${dbErr.message}`);
                 }
-            } catch (dbErr) {
-                console.error(`  - DB 저장 실패: ${dbErr.message}`);
             }
         }
     } catch (error) {
         console.error("전체 프로세스 에러:", error.message);
     } finally {
-        if (connection) {
-            await connection.end();
-        }
-        console.log("\n--- 수집 완료 ---");
+        if (connection) await connection.end();
+        console.log("\n--- 모든 수집 작업 완료 ---");
     }
 }
 
