@@ -64,3 +64,41 @@
   background: #ffe5e5;
   color: #d60000;
 }
+
+.review-write-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.review-target-select {
+  min-width: 260px;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid #ffd1e1;
+  border-radius: 999px;
+  background: #fff7fb;
+  color: #333;
+  font-size: 14px;
+  outline: none;
+}
+
+.review-target-select:focus {
+  border-color: #ff6b9d;
+  box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.14);
+}
+
+.review-write-btn {
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: none;
+  background: #ff6b9d;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.review-write-btn:hover {
+  background: #ff4f8d;
+}

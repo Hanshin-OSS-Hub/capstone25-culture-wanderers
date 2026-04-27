@@ -1,5 +1,13 @@
 package com.culture.wanderers.controller;
 
+import java.util.List;
+
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.culture.wanderers.dto.AiRecommendFestivalItem;
 import com.culture.wanderers.dto.AiRecommendRequest;
 import com.culture.wanderers.dto.AiRecommendResponse;
@@ -10,9 +18,6 @@ import com.culture.wanderers.repository.ReviewRepository;
 import com.culture.wanderers.service.FestivalSearchService;
 import com.culture.wanderers.service.GeminiRecommendationService;
 import com.culture.wanderers.service.GeminiValidationService;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @CrossOrigin(origins = "*")
@@ -77,17 +82,8 @@ public class AiRecommendationController {
 
         List<Festival> festivals = festivalSearchService.searchByExtractedConditions(extracted);
 
-        // fallback 1: category 제거
-        if (festivals.isEmpty()) {
-            extracted.setCategory(null);
-            festivals = festivalSearchService.searchByExtractedConditions(extracted);
-        }
-
-        // fallback 2: region 제거
-        if (festivals.isEmpty()) {
-            extracted.setRegion(null);
-            festivals = festivalSearchService.searchByExtractedConditions(extracted);
-        }
+        // 4/27 검색 조건이 흐려지지 않도록 컨트롤러 fallback 제거
+        
         List<AiRecommendFestivalItem> items = toRecommendItems(festivals);
 
         return new AiRecommendResponse(

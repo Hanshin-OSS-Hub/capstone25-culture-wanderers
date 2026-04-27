@@ -1,6 +1,7 @@
 // src/pages/MyPage.jsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { authFetch } from "../api/authFetch";
 import "./MyPage.css";
 
 const STORAGE_KEY = "loggedInUser";
@@ -21,13 +22,47 @@ export default function MyPage() {
     greeting: "오늘도 문화생활, 가볍게 한 번 떠나볼까요?",
   };
 
-  // 더미 제거 후 안전하게 0 처리
-  const stats = {
+  const [stats, setStats] = useState({
     reviews: 0,
     partyPosts: 0,
     joinedParties: 0,
     likedEvents: 0,
-  };
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const safeCount = (result) => {
+        if (result.status !== "fulfilled") return 0;
+
+        const data = result.value;
+
+        if (Array.isArray(data)) return data.length;
+        if (Array.isArray(data?.data)) return data.data.length;
+
+        return 0;
+      };
+
+      try {
+        const [reviews, partyPosts, joinedParties, likes] = await Promise.allSettled([
+          authFetch("/api/me/reviews"),
+          authFetch("/api/me/party-posts"),
+          authFetch("/api/me/parties"),
+          authFetch("/api/me/likes"),
+        ]);
+
+        setStats({
+          reviews: safeCount(reviews),
+          partyPosts: safeCount(partyPosts),
+          joinedParties: safeCount(joinedParties),
+          likedEvents: safeCount(likes),
+        });
+      } catch (err) {
+        console.error("마이페이지 통계 조회 실패:", err);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem(STORAGE_KEY);

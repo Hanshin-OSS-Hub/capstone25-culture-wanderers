@@ -6,6 +6,8 @@ import "./MyReviews.css";
 export default function MyReviews() {
   const navigate = useNavigate();
   const [reviews, setReviews] = useState([]);
+  const [festivalList, setFestivalList] = useState([]);
+  const [selectedFestivalId, setSelectedFestivalId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -41,6 +43,27 @@ export default function MyReviews() {
     };
 
     fetchReviews();
+
+    const fetchFestivals = async () => {
+      try {
+        const data = await authFetch("/api/me/visited-festivals");
+
+        const visitedList = Array.isArray(data)
+          ? data.map((item) => ({
+            id: item.festivalId,
+            title: item.festivalTitle,
+          }))
+          : [];
+
+        setFestivalList(visitedList);
+
+        setFestivalList(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("축제 목록 조회 실패:", err);
+      }
+    };
+
+    fetchFestivals();
   }, []);
 
   const handleDelete = async (id) => {
@@ -71,11 +94,40 @@ export default function MyReviews() {
     <div className="myreviews-page">
       <div className="myreviews-header">
         <h2>내 후기</h2>
+        <select
+          className="review-target-select"
+          value={selectedFestivalId}
+          onChange={(e) => setSelectedFestivalId(e.target.value)}
+        >
+          <option value="">후기 작성할 행사 선택</option>
+          {festivalList.map((festival) => (
+            <option
+              key={festival.festivalId || festival.id}
+              value={festival.festivalId || festival.id}
+            >
+              {festival.festivalTitle || festival.title}
+            </option>
+          ))}
+        </select>
+
         <button
           className="review-write-btn"
-          onClick={() => navigate("/mypage/reviews/new")}
+          onClick={() => {
+            const selectedFestival = festivalList.find(
+              (festival) =>
+                String(festival.festivalId || festival.id) === String(selectedFestivalId)
+            );
+
+            navigate("/mypage/reviews/new", {
+              state: {
+                targetType: "festival",
+                targetId: selectedFestival.festivalId || selectedFestival.id,
+                targetTitle: selectedFestival.festivalTitle || selectedFestival.title,
+              },
+            });
+          }}
         >
-          ✏️ 후기 작성
+          후기 작성
         </button>
       </div>
 
@@ -89,7 +141,7 @@ export default function MyReviews() {
             <div key={review.id} className="review-card">
               <div className="review-card-header">
                 <span className="review-target">
-                  {review.targetType === "festival" ? "🎪 축제" : "🎉 파티"} ·{" "}
+                  {review.targetType === "festival" ? "축제" : "파티"} ·{" "}
                   {review.targetTitle}
                 </span>
                 <span className="review-date">

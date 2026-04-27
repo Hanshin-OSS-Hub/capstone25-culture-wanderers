@@ -234,11 +234,15 @@ export default function MyPartyPosts() {
       status: "OPEN",
       category: "GENERAL",
       maxPeople: Number(form.모집인원),
-      currentPeople: isEditing ? editingPost?.currentPeople ?? 0 : 0,
+      currentPeople: isEditing ? editingPost?.currentPeople ?? 1 : 1,
       meetingTime: form.date,
       location: form.region.trim(),
-      festivalId: location.state?.festivalId ?? null,
-      festivalTitle: location.state?.festivalTitle ?? null,
+      festivalId: isEditing
+        ? editingPost?.festivalId ?? null
+        : location.state?.festivalId ?? null,
+      festivalTitle: isEditing
+        ? editingPost?.festivalTitle ?? null
+        : location.state?.festivalTitle ?? null,
     };
 
     try {
@@ -446,12 +450,20 @@ export default function MyPartyPosts() {
                 <article key={p.id} className="myposts-card">
                   <div className="myposts-card-top">
                     <div className="myposts-badges">
-                      <span className="badge">📍 {p.region || "-"}</span>
+                      <span className="badge"> 지역 : {p.region || "-"}</span>
                       <span className="badge">
                         📅 {formatDisplayDateTime(p.meetingTime || p.date)}
                       </span>
                       <span className="badge">👥 {p.capacity ?? 2}명</span>
-                      <span className="badge">상태: {p.status || "OPEN"}</span>
+                      <span className="badge">
+                        상태: {
+                          p.status === "OPEN"
+                            ? "모집중"
+                            : p.status === "FULL"
+                              ? "마감"
+                              : "닫힘"
+                        }
+                      </span>
                     </div>
                     <div className="myposts-dates">
                       <span>

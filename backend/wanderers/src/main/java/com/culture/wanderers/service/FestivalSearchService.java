@@ -1,18 +1,20 @@
 package com.culture.wanderers.service;
 
-import com.culture.wanderers.dto.GeminiExtractResponse;
-import com.culture.wanderers.entity.Festival;
-import com.culture.wanderers.repository.FestivalRepository;
-import jakarta.persistence.criteria.Predicate;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+
+import com.culture.wanderers.dto.GeminiExtractResponse;
+import com.culture.wanderers.entity.Festival;
+import com.culture.wanderers.repository.FestivalRepository;
+
+import jakarta.persistence.criteria.Predicate;
 
 @Service
 public class FestivalSearchService {
@@ -23,8 +25,10 @@ public class FestivalSearchService {
     private static final Set<String> NOISE_KEYWORDS = Set.of(
             "추천", "추천해줘", "행사", "축제", "전시", "공연", "체험",
             "갈만한", "갈만한데", "있어", "있어?", "어디", "뭐", "좋은", "곳",
+            "놀거리", "데이트", "나들이", "가볼만한", "가볼만한곳",
+            "무료", "오늘", "내일", "모레",
             "서울", "부산", "인천", "대구", "광주", "대전", "울산",
-            "경기", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주"
+            "경기", "경기도", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주"
     );
 
     public FestivalSearchService(FestivalRepository festivalRepository) {
@@ -39,27 +43,23 @@ public class FestivalSearchService {
         System.out.println("[FestivalSearchService] 검색 조건 date = " + (condition != null ? condition.getDate() : null));
         System.out.println("[FestivalSearchService] 검색 조건 keywords = " + validKeywords);
 
-        if (condition != null && !hasText(condition.getDate())) {
-        String today = LocalDate.now().format(DATE_FORMATTER);
-        condition.setDate(today);
-        }
-
-        // 1차
+        // 4/27 사용자가 날짜를 입력하지 않으면 날짜 조건을 적용하지 않음
+        // 4/27 1차: 날짜 + 지역 + 카테고리 + 키워드 검색
         List<Festival> results = festivalRepository.findAll(buildSpecification(condition, validKeywords, true));
 
-        // 2차: 키워드 제거
-        if (results.isEmpty()) {
+        // 4/27 키워드가 있는 검색은 키워드를 제거하지 않음
+        if (results.isEmpty() && condition != null && validKeywords.isEmpty()) {
             results = festivalRepository.findAll(buildSpecification(condition, validKeywords, false));
         }
 
-        // 3차: category 제거
+        // 4/27 카테고리만 완화, 키워드는 유지
         if (results.isEmpty() && condition != null) {
             condition.setCategory(null);
-            results = festivalRepository.findAll(buildSpecification(condition, validKeywords, false));
+            results = festivalRepository.findAll(buildSpecification(condition, validKeywords, true));
         }
 
-        // 4차: region 제거
-        if (results.isEmpty() && condition != null) {
+        // 4/27 지역만 완화, 키워드는 유지
+        if (results.isEmpty() && condition != null && validKeywords.isEmpty()) {
             condition.setRegion(null);
             results = festivalRepository.findAll(buildSpecification(condition, validKeywords, false));
         }
@@ -101,6 +101,10 @@ public class FestivalSearchService {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
+            // 4/27 종료된 행사는 추천 결과에서 제외
+            String today = LocalDate.now().format(DATE_FORMATTER);
+            predicates.add(cb.greaterThanOrEqualTo(root.get("endDate"), today));
+
             if (condition != null) {
                 if (hasText(condition.getRegion())) {
                     predicates.add(
@@ -123,28 +127,33 @@ public class FestivalSearchService {
                 if (hasText(condition.getDate())) {
                     String date = condition.getDate().trim();
 
+                    // 4/27 입력 날짜 기준 진행 중이거나 이후 7일 내 시작하는 행사까지 추천
                     LocalDate target = LocalDate.parse(date, DATE_FORMATTER);
-                    LocalDate startRange = target.minusDays(7);
-                    LocalDate endRange = target.plusDays(7);
+                    String endRange = target.plusDays(7).format(DATE_FORMATTER);
 
-                    String startStr = startRange.format(DATE_FORMATTER);
-                    String endStr = endRange.format(DATE_FORMATTER);
-
-                    predicates.add(cb.greaterThanOrEqualTo(root.get("startDate"), startStr));
-                    predicates.add(cb.lessThanOrEqualTo(root.get("startDate"), endStr));
+                    predicates.add(cb.lessThanOrEqualTo(root.get("startDate"), endRange));
+                    predicates.add(cb.greaterThanOrEqualTo(root.get("endDate"), date));
                 }
 
+                // 4/27 무료 조건 검색
+                if (condition.getPriceMax() != null && condition.getPriceMax() == 0) {
+                    predicates.add(cb.or(
+                            cb.like(cb.lower(root.get("price")), "%무료%"),
+                            cb.like(cb.lower(root.get("price")), "%입장료 없음%"),
+                            cb.like(cb.lower(root.get("price")), "%없음%"),
+                            cb.like(cb.lower(root.get("price")), "%0원%")
+                    ));
+                }
                 if (includeKeywords && validKeywords != null && !validKeywords.isEmpty()) {
                     List<Predicate> keywordGroup = new ArrayList<>();
 
                     for (String keyword : validKeywords) {
                         String likeKeyword = "%" + keyword.toLowerCase() + "%";
 
+                        // 4/27 챗봇 추천 키워드 검색 범위 축소
                         keywordGroup.add(cb.like(cb.lower(root.get("title")), likeKeyword));
-                        keywordGroup.add(cb.like(cb.lower(root.get("description")), likeKeyword));
                         keywordGroup.add(cb.like(cb.lower(root.get("location")), likeKeyword));
                         keywordGroup.add(cb.like(cb.lower(root.get("region")), likeKeyword));
-                        keywordGroup.add(cb.like(cb.lower(root.get("category")), likeKeyword));
                     }
 
                     if (!keywordGroup.isEmpty()) {
@@ -205,6 +214,15 @@ public class FestivalSearchService {
                     .replace("추천", " ")
                     .replace("갈만한데", " ")
                     .replace("갈만한", " ")
+                    .replace("가볼만한곳", " ")
+                    .replace("가볼만한", " ")
+                    .replace("놀거리", " ")
+                    .replace("데이트", " ")
+                    .replace("나들이", " ")
+                    .replace("무료", " ")
+                    .replace("오늘", " ")
+                    .replace("내일", " ")
+                    .replace("모레", " ")
                     .replace("갈", " ")
                     .replace("있어?", " ")
                     .replace("있어", " ")
@@ -226,7 +244,8 @@ public class FestivalSearchService {
                     continue;
                 }
 
-                if (finalToken.length() <= 1) {
+                // 4/27 한글 1글자 키워드도 검색에 사용
+                if (finalToken.length() <= 1 && !finalToken.matches("[가-힣]")) {
                     continue;
                 }
 

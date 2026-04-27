@@ -1,5 +1,7 @@
 // src/pages/MyPage/MyPageHome.jsx
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { authFetch } from "../../api/authFetch";
+import { getLikedFestivals } from "../../utils/likeStorage";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import "./MyPage.css";
@@ -19,13 +21,60 @@ export default function MyPageHome() {
     greeting: "오늘도 문화생활, 가볍게 한 번 떠나볼까요?",
   };
 
-  // 더미 제거 후 안전하게 0 처리
-  const stats = {
+  const [stats, setStats] = useState({
     reviews: 0,
     partyPosts: 0,
     joinedParties: 0,
     likedEvents: 0,
-  };
+  });
+
+  useEffect(() => {
+    const safeCount = (result) => {
+      if (result.status !== "fulfilled") return 0;
+
+      const data = result.value;
+
+      if (Array.isArray(data)) return data.length;
+      if (Array.isArray(data?.data)) return data.data.length;
+
+      return 0;
+    };
+
+    const fetchStats = async () => {
+      const [reviews, partyPosts, joinedParties, likes] = await Promise.allSettled([
+        authFetch("/api/me/reviews"),
+        authFetch("/api/me/party-posts"),
+        authFetch("/api/me/parties"),
+        authFetch("/api/me/likes"),
+      ]);
+
+      setStats({
+        reviews: safeCount(reviews),
+        partyPosts: safeCount(partyPosts),
+        joinedParties: safeCount(joinedParties),
+        likedEvents: getLikedFestivals().length,
+      });
+    };
+
+    fetchStats();
+  }, []);
+
+  useEffect(() => {
+    const syncLikedCount = () => {
+      setStats((prev) => ({
+        ...prev,
+        likedEvents: getLikedFestivals().length,
+      }));
+    };
+
+    window.addEventListener("festival-likes-changed", syncLikedCount);
+    window.addEventListener("storage", syncLikedCount);
+
+    return () => {
+      window.removeEventListener("festival-likes-changed", syncLikedCount);
+      window.removeEventListener("storage", syncLikedCount);
+    };
+  }, []);
 
   return (
     <section className="mypage-main">

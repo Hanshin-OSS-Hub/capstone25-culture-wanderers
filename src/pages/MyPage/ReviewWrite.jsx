@@ -39,12 +39,17 @@ export default function ReviewWrite() {
       return;
     }
 
+    if (!targetId) {
+      alert("후기 대상 정보가 없습니다. 상세페이지에서 후기 작성을 눌러주세요.");
+      return;
+    }
+
     const payload = {
       targetType,
-      targetId,
+      targetId: Number(targetId),
       targetTitle: targetTitle.trim(),
       title: title.trim(),
-      rating,
+      rating: Number(rating),
       content: content.trim(),
     };
 

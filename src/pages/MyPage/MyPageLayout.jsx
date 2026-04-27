@@ -40,73 +40,63 @@ export default function MyPageLayout() {
               <div className="mypage-top-email">{email}</div>
             </div>
           </div>
-
-          <div className="mypage-top-right">
-            <button
-              type="button"
-              className="mypage-top-edit-btn"
-              onClick={() => navigate("info")}
-            >
-              내 정보 수정
-            </button>
-          </div>
         </section>
 
         {/* ===== 메인 레이아웃: 사이드바 + 내용(Outlet) ===== */}
         <div className="mypage-main-row">
           <aside className="mypage-sidebar">
             <ul className="mypage-side-menu">
-  <li>
-    <NavLink end to="." className={({ isActive }) => (isActive ? "active" : "")}>
-      👤 내 정보
-    </NavLink>
-  </li>
+              <li>
+                <NavLink end to="." className={({ isActive }) => (isActive ? "active" : "")}>
+                  👤 내 정보
+                </NavLink>
+              </li>
 
-  <li>
-    <NavLink to="info" className={({ isActive }) => (isActive ? "active" : "")}>
-      ✏️ 내 정보 수정
-    </NavLink>
-  </li>
+              <li>
+                <NavLink to="info" className={({ isActive }) => (isActive ? "active" : "")}>
+                  ✏️ 내 정보 수정
+                </NavLink>
+              </li>
 
-  <li>
-    <NavLink to="likes" className={({ isActive }) => (isActive ? "active" : "")}>
-      ❤️ 좋아요 리스트
-    </NavLink>
-  </li>
+              <li>
+                <NavLink to="likes" className={({ isActive }) => (isActive ? "active" : "")}>
+                  ❤️ 좋아요 리스트
+                </NavLink>
+              </li>
 
-  <li>
-    <NavLink to="reviews" className={({ isActive }) => (isActive ? "active" : "")}>
-      ⭐ 내 후기
-    </NavLink>
-  </li>
+              <li>
+                <NavLink to="reviews" className={({ isActive }) => (isActive ? "active" : "")}>
+                  ⭐ 내 후기
+                </NavLink>
+              </li>
 
-  <li>
-    <NavLink to="posts" className={({ isActive }) => (isActive ? "active" : "")}>
-      📣 내 파티 모집글
-    </NavLink>
-  </li>
+              <li>
+                <NavLink to="posts" className={({ isActive }) => (isActive ? "active" : "")}>
+                  📣 내 파티 모집글
+                </NavLink>
+              </li>
 
-  <li>
-    <NavLink to="parties" className={({ isActive }) => (isActive ? "active" : "")}>
-      🎉 참여한 파티
-    </NavLink>
-  </li>
+              <li>
+                <NavLink to="parties" className={({ isActive }) => (isActive ? "active" : "")}>
+                  🎉 참여한 파티
+                </NavLink>
+              </li>
 
-  <li>
-    <NavLink to="calendar" className={({ isActive }) => (isActive ? "active" : "")}>
-      📅 캘린더·일정
-    </NavLink>
-  </li>
+              <li>
+                <NavLink to="calendar" className={({ isActive }) => (isActive ? "active" : "")}>
+                  📅 캘린더·일정
+                </NavLink>
+              </li>
 
-  <li>
-    <NavLink
-      to="withdraw"
-      className={({ isActive }) => (isActive ? "active danger" : "danger")}
-    >
-      ⚙️ 회원탈퇴
-    </NavLink>
-  </li>
-</ul>
+              <li>
+                <NavLink
+                  to="withdraw"
+                  className={({ isActive }) => (isActive ? "active danger" : "danger")}
+                >
+                  ⚙️ 회원탈퇴
+                </NavLink>
+              </li>
+            </ul>
 
             <button
               type="button"

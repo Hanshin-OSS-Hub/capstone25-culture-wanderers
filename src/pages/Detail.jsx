@@ -86,6 +86,7 @@ export default function Detail() {
   const [mapError, setMapError] = useState('');
   const [destinationCoords, setDestinationCoords] = useState(null);
   const [visitDate, setVisitDate] = useState('');
+  const [isVisited, setIsVisited] = useState(false);
 
   const toInputDate = (value) => {
     if (!value || String(value).startsWith('0000')) return '';
@@ -332,6 +333,27 @@ export default function Detail() {
     };
   }, [loading, activeTab, festival?.location, festival?.title]);
 
+  useEffect(() => {
+    const checkVisited = async () => {
+      try {
+        const data = await authFetch("/api/me/visited-festivals");
+
+        const visited = Array.isArray(data)
+          ? data.some((item) => Number(item.festivalId) === Number(festival.id))
+          : false;
+
+        setIsVisited(visited);
+      } catch (error) {
+        console.error("내가 간 행사 처리 실패:", error);
+        alert("내가 간 행사 처리에 실패했습니다.");
+      }
+    };
+
+    if (festival?.id) {
+      checkVisited();
+    }
+  }, [festival]);
+
   if (loading) return <div className="loading-box">데이터를 불러오는 중...</div>;
   if (!festival) return <div className="loading-box">축제 정보를 찾을 수 없습니다.</div>;
 
@@ -482,6 +504,37 @@ export default function Detail() {
     navigate('/mypage/calendar');
   };
 
+  const toggleVisitedFestival = async () => {
+    try {
+      if (isVisited) {
+        const confirmed = window.confirm("내가 간 행사에서 제외할까요?");
+        if (!confirmed) return;
+
+        await authFetch(`/api/me/visited-festivals/${festival.id}`, {
+          method: "DELETE",
+        });
+
+        setIsVisited(false);
+        alert("내가 간 행사에서 제외되었습니다.");
+        return;
+      }
+
+      await authFetch("/api/me/visited-festivals", {
+        method: "POST",
+        body: JSON.stringify({
+          festivalId: festival.id,
+          festivalTitle: festival.title,
+        }),
+      });
+
+      setIsVisited(true);
+      alert("내가 간 행사에 추가되었습니다.");
+    } catch (error) {
+      console.error("내가 간 행사 처리 실패:", error);
+      alert("로그인 후 이용할 수 있습니다.");
+    }
+  };
+
   return (
     <div className="detail-page">
       <button className="back-btn" onClick={() => navigate(-1)}>← 뒤로가기</button>
@@ -489,10 +542,13 @@ export default function Detail() {
       <div className="detail-main-card">
         <div className="detail-top">
           <div className="detail-poster">
-            {festival.thumbnail_url ? (
-              <img src={festival.thumbnail_url} alt={festival.title} />
+            {(festival.thumbnailUrl || festival.thumbnail_url) ? (
+              <img
+                src={festival.thumbnailUrl || festival.thumbnail_url}
+                alt={festival.title}
+              />
             ) : (
-              <span style={{ color: '#999' }}>이미지 없음</span>
+              <div>이미지 없음</div>
             )}
           </div>
 
@@ -541,7 +597,7 @@ export default function Detail() {
                         fontWeight: 700,
                       }}
                     >
-                      🔥 인기 축제
+                      인기
                     </span>
                   )}
                 </div>
@@ -665,6 +721,14 @@ export default function Detail() {
                   공식 홈페이지
                 </button>
               ) : null}
+
+              <button
+                type="button"
+                className="detail-reserve-btn"
+                onClick={toggleVisitedFestival}
+              >
+                {isVisited ? "이미 추가됨" : "다녀왔어요"}
+              </button>
             </div>
           </div>
         </div>
@@ -834,16 +898,26 @@ export default function Detail() {
 
               <button
                 className="detail-reserve-btn"
-                style={{ maxWidth: '220px', marginBottom: '24px' }}
-                onClick={() =>
+                style={{
+                  maxWidth: '220px',
+                  marginBottom: '24px',
+                  opacity: isVisited ? 1 : 0.55,
+                  cursor: isVisited ? 'pointer' : 'not-allowed',
+                }}
+                onClick={() => {
+                  if (!isVisited) {
+                    alert("다녀왔어요를 먼저 눌러야 리뷰를 작성할 수 있습니다.");
+                    return;
+                  }
+
                   navigate('/mypage/reviews/new', {
                     state: {
                       targetType: 'festival',
                       targetId: festival.id,
                       targetTitle: festival.title,
                     },
-                  })
-                }
+                  });
+                }}
               >
                 리뷰 작성하러 가기
               </button>
