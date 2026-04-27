@@ -31,6 +31,9 @@ public class Festival {
 
     private String category;
     private String price;
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String description;
     private String tel;
 
