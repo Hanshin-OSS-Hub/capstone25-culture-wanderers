@@ -385,6 +385,29 @@
   margin-bottom: 6px;
 }
 
+.journey-history-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.journey-empty-state {
+  padding: 24px 0 8px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.visited-page-header {
+  margin-bottom: 18px;
+}
+
+.journey-visit-list.full {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .journey-steps {
   display: flex;
   flex-wrap: wrap;

@@ -138,7 +138,19 @@ export default function MyReviews() {
       ) : (
         <div className="review-card-list">
           {reviews.map((review) => (
-            <div key={review.id} className="review-card">
+            <div
+              key={review.id}
+              className="review-card"
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate(`/community/review/${review.id}`)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  navigate(`/community/review/${review.id}`);
+                }
+              }}
+            >
               <div className="review-card-header">
                 <span className="review-target">
                   {review.targetType === "festival" ? "축제" : "파티"} ·{" "}
@@ -163,13 +175,19 @@ export default function MyReviews() {
               <div className="review-actions">
                 <button
                   className="edit-btn"
-                  onClick={() => navigate(`/mypage/reviews/${review.id}/edit`)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/mypage/reviews/${review.id}/edit`);
+                  }}
                 >
                   수정
                 </button>
                 <button
                   className="delete-btn"
-                  onClick={() => handleDelete(review.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(review.id);
+                  }}
                 >
                   삭제
                 </button>

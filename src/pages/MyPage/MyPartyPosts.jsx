@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+
 import { authFetch } from "../../api/authFetch";
 import "./MyPartyPosts.css";
 
@@ -26,7 +27,6 @@ function formatDateTimeForInput(value) {
   const dd = String(date.getDate()).padStart(2, "0");
   const hh = String(date.getHours()).padStart(2, "0");
   const mi = String(date.getMinutes()).padStart(2, "0");
-
   return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
 }
 
@@ -34,16 +34,13 @@ function formatDisplayDateTime(value) {
   if (!value) return "-";
 
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return String(value);
-  }
+  if (Number.isNaN(date.getTime())) return String(value);
 
   const yyyy = date.getFullYear();
   const mm = String(date.getMonth() + 1).padStart(2, "0");
   const dd = String(date.getDate()).padStart(2, "0");
   const hh = String(date.getHours()).padStart(2, "0");
   const mi = String(date.getMinutes()).padStart(2, "0");
-
   return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
 }
 
@@ -51,41 +48,70 @@ function formatCreatedAt(value) {
   if (!value) return "-";
 
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return String(value);
-  }
+  if (Number.isNaN(date.getTime())) return String(value);
 
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
-    2,
-    "0"
-  )}-${String(date.getDate()).padStart(2, "0")}`;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate()
+  ).padStart(2, "0")}`;
 }
 
-function normalizeParty(p) {
+function formatConditionText(condition) {
+  const raw = String(condition || "").trim();
+  if (!raw) return "별도의 모집 조건 없음";
+  if (raw.toUpperCase() === "GENERAL") return "별도의 모집 조건 없음";
+  return raw;
+}
+
+function normalizeParty(party) {
   return {
-    ...p,
-    festivalTitle: p.festivalTitle || "",
-    region: p.location || "",
-    date: formatDateTimeForInput(p.meetingTime),
-    capacity: p.maxPeople ?? 2,
-    contact: p.contact || "",
+    ...party,
+    festivalTitle: party.festivalTitle || "",
+    region: party.location || "",
+    date: formatDateTimeForInput(party.meetingTime),
+    capacity: party.maxPeople ?? 2,
+    contact: party.contact || "",
+    deadline: party.deadline || "",
+    condition: formatConditionText(party.category),
   };
+}
+
+function getPartyStatusLabel(party) {
+  const currentPeople = Number(party.currentPeople ?? 0);
+  const maxPeople = Number(party.capacity ?? party.maxPeople ?? 0);
+  const rawStatus = String(party.status || "").toUpperCase();
+  const meetingTime = party.meetingTime ? new Date(party.meetingTime).getTime() : null;
+  const deadlineTime = party.deadline ? new Date(party.deadline).getTime() : null;
+  const now = Date.now();
+
+  if (
+    rawStatus === "CLOSED" ||
+    (maxPeople > 0 && currentPeople >= maxPeople) ||
+    (deadlineTime && !Number.isNaN(deadlineTime) && now > deadlineTime) ||
+    (meetingTime && !Number.isNaN(meetingTime) && now > meetingTime)
+  ) {
+    return "모집 완료";
+  }
+
+  return "모집 중";
 }
 
 const emptyForm = {
   title: "",
   region: "",
   date: "",
-  모집인원: 2,
+  deadline: "",
+  recruitCount: 2,
   contact: "",
+  condition: "",
   content: "",
 };
 
 export default function MyPartyPosts() {
   const location = useLocation();
   const navigate = useNavigate();
+
   const [posts, setPosts] = useState([]);
-  const [mode, setMode] = useState("list"); // list | create | edit
+  const [mode, setMode] = useState("list");
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(true);
@@ -99,15 +125,9 @@ export default function MyPartyPosts() {
         setError("");
 
         const data = await authFetch("/api/me/party-posts");
-
-        const postList = Array.isArray(data)
-          ? data
-          : Array.isArray(data.data)
-            ? data.data
-            : [];
+        const postList = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
 
         const normalized = postList.map(normalizeParty);
-
         const sorted = normalized
           .slice()
           .sort((a, b) =>
@@ -118,8 +138,8 @@ export default function MyPartyPosts() {
 
         setPosts(sorted);
       } catch (err) {
-        console.error("내 파티 모집글 조회 실패:", err);
-        setError("내 파티 모집글을 불러오지 못했습니다.");
+        console.error("파티 모집글 조회 실패:", err);
+        setError("파티 모집글을 불러오지 못했어요.");
       } finally {
         setLoading(false);
       }
@@ -132,7 +152,7 @@ export default function MyPartyPosts() {
 
   const editingPost = useMemo(() => {
     if (!editingId) return null;
-    return posts.find((p) => Number(p.id) === Number(editingId)) || null;
+    return posts.find((post) => Number(post.id) === Number(editingId)) || null;
   }, [editingId, posts]);
 
   const resetToList = () => {
@@ -150,15 +170,17 @@ export default function MyPartyPosts() {
       region: preset?.region || "",
       content: preset?.content || "",
       date: preset?.date || `${formatDate()}T19:00`,
-      모집인원: preset?.모집인원 || 2,
+      deadline: preset?.deadline || "",
+      recruitCount: preset?.recruitCount || 2,
       contact: preset?.contact || "",
+      condition: preset?.condition || "",
     });
   };
 
   const openEdit = (id) => {
-    const target = posts.find((p) => Number(p.id) === Number(id));
+    const target = posts.find((post) => Number(post.id) === Number(id));
     if (!target) {
-      alert("수정할 글을 찾을 수 없습니다.");
+      alert("수정할 글을 찾을 수 없어요.");
       return;
     }
 
@@ -168,27 +190,39 @@ export default function MyPartyPosts() {
       title: target.title || "",
       region: target.region || "",
       date: target.date || "",
-      모집인원: target.capacity ?? 2,
+      deadline: formatDateTimeForInput(target.deadline),
+      recruitCount: target.capacity ?? 2,
       contact: target.contact || "",
+      condition: target.condition === "별도의 모집 조건 없음" ? "" : target.condition || "",
       content: target.content || "",
     });
   };
 
   useEffect(() => {
     const partyTarget = location.state;
-
     if (!partyTarget?.fromFestival) return;
 
     openCreate({
-      title: `${partyTarget.festivalTitle} 같이 가실 분 구해요!`,
+      title: `${partyTarget.festivalTitle} 같이 가실 분?`,
       region: partyTarget.region || partyTarget.location || "",
-      content: `${partyTarget.festivalTitle} 같이 가실 분 모집합니다.\n편하게 신청해주세요!`,
+      content: `${partyTarget.festivalTitle} 같이 갈 분 모집합니다.\n편하게 요청해주세요!`,
       date: `${formatDate()}T19:00`,
-      모집인원: 2,
+      recruitCount: 2,
     });
 
     navigate(location.pathname, { replace: true, state: null });
   }, [location.state, location.pathname, navigate]);
+
+  useEffect(() => {
+    const editPartyId = location.state?.editPartyId;
+    if (!editPartyId || posts.length === 0) return;
+
+    const target = posts.find((post) => Number(post.id) === Number(editPartyId));
+    if (!target) return;
+
+    openEdit(editPartyId);
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.state, location.pathname, navigate, posts]);
 
   const handleDelete = async (id) => {
     if (!window.confirm("이 모집글을 삭제할까요?")) return;
@@ -198,11 +232,11 @@ export default function MyPartyPosts() {
         method: "DELETE",
       });
 
-      setPosts((prev) => prev.filter((p) => Number(p.id) !== Number(id)));
-      alert("모집글이 삭제되었습니다.");
+      setPosts((prev) => prev.filter((post) => Number(post.id) !== Number(id)));
+      alert("모집글을 삭제했어요.");
     } catch (err) {
       console.error("모집글 삭제 실패:", err);
-      alert("모집글 삭제에 실패했습니다.");
+      alert("모집글 삭제에 실패했어요.");
     }
   };
 
@@ -215,34 +249,48 @@ export default function MyPartyPosts() {
     if (!form.region.trim()) return "지역을 입력해주세요.";
     if (!form.date.trim()) return "모임 일시를 입력해주세요.";
     if (!form.content.trim()) return "내용을 입력해주세요.";
-    if (Number(form.모집인원) < 2) return "모집인원은 최소 2명 이상으로 해주세요.";
+    if (Number(form.recruitCount) < 2) return "모집 인원은 최소 2명 이상으로 해주세요.";
+
+    const meetingAt = new Date(form.date).getTime();
+    if (!Number.isNaN(meetingAt) && meetingAt <= Date.now()) {
+      return "모임 일시는 현재 시간보다 이후여야 해요.";
+    }
+
+    if (form.deadline.trim()) {
+      const deadlineAt = new Date(form.deadline).getTime();
+      if (!Number.isNaN(deadlineAt) && deadlineAt <= Date.now()) {
+        return "모집 마감일은 현재 시간보다 이후여야 해요.";
+      }
+      if (!Number.isNaN(deadlineAt) && !Number.isNaN(meetingAt) && deadlineAt >= meetingAt) {
+        return "모집 마감일은 모임 일시보다 빨라야 해요.";
+      }
+    }
+
     return "";
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const msg = validate();
-    if (msg) {
-      alert(msg);
+    const message = validate();
+    if (message) {
+      alert(message);
       return;
     }
 
     const payload = {
       title: form.title.trim(),
       content: form.content.trim(),
-      status: "OPEN",
-      category: "GENERAL",
-      maxPeople: Number(form.모집인원),
-      currentPeople: isEditing ? editingPost?.currentPeople ?? 1 : 1,
+      status: "RECRUITING",
+      category: form.condition.trim() || "GENERAL",
+      maxPeople: Number(form.recruitCount),
+      currentPeople: isEditing ? editingPost?.currentPeople ?? 0 : 0,
       meetingTime: form.date,
       location: form.region.trim(),
-      festivalId: isEditing
-        ? editingPost?.festivalId ?? null
-        : location.state?.festivalId ?? null,
-      festivalTitle: isEditing
-        ? editingPost?.festivalTitle ?? null
-        : location.state?.festivalTitle ?? null,
+      contact: form.contact.trim(),
+      festivalId: location.state?.festivalId ?? editingPost?.festivalId ?? null,
+      festivalTitle: location.state?.festivalTitle ?? editingPost?.festivalTitle ?? null,
+      deadline: form.deadline.trim() || null,
     };
 
     try {
@@ -270,7 +318,7 @@ export default function MyPartyPosts() {
           )
         );
 
-        alert("모집글이 등록되었습니다!");
+        alert("모집글을 등록했어요.");
         resetToList();
         return;
       }
@@ -292,9 +340,7 @@ export default function MyPartyPosts() {
 
         setPosts((prev) =>
           prev
-            .map((p) =>
-              Number(p.id) === Number(editingId) ? { ...p, ...updatedPost } : p
-            )
+            .map((post) => (Number(post.id) === Number(editingId) ? { ...post, ...updatedPost } : post))
             .sort((a, b) =>
               String(b.updatedAt || b.createdAt || "").localeCompare(
                 String(a.updatedAt || a.createdAt || "")
@@ -302,19 +348,19 @@ export default function MyPartyPosts() {
             )
         );
 
-        alert("모집글이 수정되었습니다!");
+        alert("모집글을 수정했어요.");
         resetToList();
       }
     } catch (err) {
       console.error("모집글 저장 실패:", err);
-      alert("모집글 저장에 실패했습니다.");
+      alert("모집글 저장에 실패했어요.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   if (loading) {
-    return <div className="myposts-page">내 파티 모집글을 불러오는 중...</div>;
+    return <div className="myposts-page">파티 모집글을 불러오는 중이에요.</div>;
   }
 
   if (error) {
@@ -328,29 +374,25 @@ export default function MyPartyPosts() {
 
         {mode === "list" ? (
           <button className="myposts-primary-btn" onClick={() => openCreate()}>
-            ✏️ 모집글 작성
+            새 모집글 작성
           </button>
         ) : (
           <button className="myposts-ghost-btn" onClick={resetToList}>
-            ← 목록으로
+            목록으로
           </button>
         )}
       </div>
 
       {mode !== "list" && (
         <section className="myposts-form-card">
-          <h3 className="myposts-form-title">
-            {isEditing ? "모집글 수정" : "모집글 작성"}
-          </h3>
+          <h3 className="myposts-form-title">{isEditing ? "모집글 수정" : "모집글 작성"}</h3>
 
-          {isEditing && editingPost && (
+          {isEditing && editingPost ? (
             <p className="myposts-form-sub">
-              작성일: {formatCreatedAt(editingPost.createdAt)}
-              {editingPost.updatedAt
-                ? ` · 수정일: ${formatCreatedAt(editingPost.updatedAt)}`
-                : ""}
+              작성일 {formatCreatedAt(editingPost.createdAt)}
+              {editingPost.updatedAt ? ` · 수정일 ${formatCreatedAt(editingPost.updatedAt)}` : ""}
             </p>
-          )}
+          ) : null}
 
           <form className="myposts-form" onSubmit={handleSubmit}>
             <div className="myposts-grid">
@@ -359,7 +401,7 @@ export default function MyPartyPosts() {
                 <input
                   value={form.title}
                   onChange={(e) => handleChange("title", e.target.value)}
-                  placeholder="예) 같이 홍대 축제 보러가요!"
+                  placeholder="예) 같이 전시 보러 가실 분?"
                   disabled={isSubmitting}
                 />
               </div>
@@ -369,7 +411,7 @@ export default function MyPartyPosts() {
                 <input
                   value={form.region}
                   onChange={(e) => handleChange("region", e.target.value)}
-                  placeholder="예) 서울 / 홍대"
+                  placeholder="예) 서울, 경기"
                   disabled={isSubmitting}
                 />
               </div>
@@ -389,18 +431,38 @@ export default function MyPartyPosts() {
                 <input
                   type="number"
                   min={2}
-                  value={form.모집인원}
-                  onChange={(e) => handleChange("모집인원", e.target.value)}
+                  value={form.recruitCount}
+                  onChange={(e) => handleChange("recruitCount", e.target.value)}
                   disabled={isSubmitting}
                 />
               </div>
 
               <div className="myposts-field full">
-                <label>연락 방법(현재 저장 안 됨)</label>
+                <label>모집 마감일</label>
+                <input
+                  type="datetime-local"
+                  value={form.deadline}
+                  onChange={(e) => handleChange("deadline", e.target.value)}
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <div className="myposts-field full">
+                <label>모집 조건</label>
+                <input
+                  value={form.condition}
+                  onChange={(e) => handleChange("condition", e.target.value)}
+                  placeholder="예) 20대, 전시 좋아하시는 분"
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <div className="myposts-field full">
+                <label>연락 방법</label>
                 <input
                   value={form.contact}
                   onChange={(e) => handleChange("contact", e.target.value)}
-                  placeholder="백엔드 필드 없어서 화면 입력만 됩니다."
+                  placeholder="오픈채팅 링크, 인스타 ID, 이메일 등을 적어주세요."
                   disabled={isSubmitting}
                 />
               </div>
@@ -411,26 +473,17 @@ export default function MyPartyPosts() {
                   rows={5}
                   value={form.content}
                   onChange={(e) => handleChange("content", e.target.value)}
-                  placeholder="어떤 분위기/조건인지 자세히 적어주세요."
+                  placeholder="어떤 분위기의 모임인지, 함께 무엇을 할지 적어주세요."
                   disabled={isSubmitting}
                 />
               </div>
             </div>
 
             <div className="myposts-actions">
-              <button
-                type="button"
-                className="myposts-ghost-btn"
-                onClick={resetToList}
-                disabled={isSubmitting}
-              >
+              <button type="button" className="myposts-ghost-btn" onClick={resetToList} disabled={isSubmitting}>
                 취소
               </button>
-              <button
-                type="submit"
-                className="myposts-primary-btn"
-                disabled={isSubmitting}
-              >
+              <button type="submit" className="myposts-primary-btn" disabled={isSubmitting}>
                 {isSubmitting ? "저장 중..." : isEditing ? "저장" : "등록"}
               </button>
             </div>
@@ -441,58 +494,88 @@ export default function MyPartyPosts() {
       {mode === "list" && (
         <>
           {posts.length === 0 ? (
-            <p className="myposts-empty">
-              아직 작성한 모집글이 없습니다. 첫 모집글을 작성해보세요!
-            </p>
+            <p className="myposts-empty">아직 작성한 모집글이 없어요. 첫 모집글을 올려볼까요?</p>
           ) : (
             <div className="myposts-list">
-              {posts.map((p) => (
-                <article key={p.id} className="myposts-card">
+              {posts.map((post) => (
+                <article
+                  key={post.id}
+                  className="myposts-card"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate(`/party/${post.id}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      navigate(`/party/${post.id}`);
+                    }
+                  }}
+                >
                   <div className="myposts-card-top">
                     <div className="myposts-badges">
-                      <span className="badge"> 지역 : {p.region || "-"}</span>
-                      <span className="badge">
-                        📅 {formatDisplayDateTime(p.meetingTime || p.date)}
-                      </span>
-                      <span className="badge">👥 {p.capacity ?? 2}명</span>
-                      <span className="badge">
-                        상태: {
-                          p.status === "OPEN"
-                            ? "모집중"
-                            : p.status === "FULL"
-                              ? "마감"
-                              : "닫힘"
-                        }
-                      </span>
+                      <span className="badge">지역: {post.region || "-"}</span>
+                      <span className="badge">{formatDisplayDateTime(post.meetingTime || post.date)}</span>
+                      <span className="badge">인원: {post.capacity ?? 2}명</span>
+                      <span className="badge">상태: {getPartyStatusLabel(post)}</span>
                     </div>
                     <div className="myposts-dates">
                       <span>
-                        {p.updatedAt
-                          ? `${formatCreatedAt(p.updatedAt)} (수정)`
-                          : formatCreatedAt(p.createdAt)}
+                        {post.updatedAt
+                          ? `${formatCreatedAt(post.updatedAt)} (수정)`
+                          : formatCreatedAt(post.createdAt)}
                       </span>
                     </div>
                   </div>
 
-                  {p.festivalTitle && (
-                    <div className="myposts-festival">🎉 {p.festivalTitle}</div>
-                  )}
-
-                  <h3 className="myposts-card-title">{p.title}</h3>
-
-                  <p className="myposts-card-content">{p.content}</p>
-
-                  {p.contact ? (
-                    <p className="myposts-contact">연락: {p.contact}</p>
+                  {post.festivalTitle ? (
+                    <div
+                      className="myposts-festival"
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (post.festivalId) {
+                          navigate(`/detail/${post.festivalId}`);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (post.festivalId) {
+                            navigate(`/detail/${post.festivalId}`);
+                          }
+                        }
+                      }}
+                    >
+                      관련 축제: {post.festivalTitle}
+                    </div>
                   ) : null}
 
+                  <h3 className="myposts-card-title">{post.title}</h3>
+                  <p className="myposts-card-content">{post.content}</p>
+                  {post.deadline ? (
+                    <p className="myposts-contact">모집 마감일: {formatDisplayDateTime(post.deadline)}</p>
+                  ) : null}
+                  <p className="myposts-contact">모집 조건: {post.condition}</p>
+                  {post.contact ? <p className="myposts-contact">연락: {post.contact}</p> : null}
+
                   <div className="myposts-card-actions">
-                    <button className="btn-edit" onClick={() => openEdit(p.id)}>
+                    <button
+                      className="btn-edit"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEdit(post.id);
+                      }}
+                    >
                       수정
                     </button>
                     <button
                       className="btn-delete"
-                      onClick={() => handleDelete(p.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(post.id);
+                      }}
                     >
                       삭제
                     </button>

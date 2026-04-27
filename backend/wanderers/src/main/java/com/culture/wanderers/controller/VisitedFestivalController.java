@@ -1,8 +1,10 @@
 package com.culture.wanderers.controller;
 
+import com.culture.wanderers.dto.CultureJourneyResponse;
 import com.culture.wanderers.entity.VisitedFestival;
 import com.culture.wanderers.jwt.JwtUtil;
 import com.culture.wanderers.repository.VisitedFestivalRepository;
+import com.culture.wanderers.service.CultureJourneyService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -16,13 +18,16 @@ public class VisitedFestivalController {
 
     private final VisitedFestivalRepository visitedFestivalRepository;
     private final JwtUtil jwtUtil;
+    private final CultureJourneyService cultureJourneyService;
 
     public VisitedFestivalController(
             VisitedFestivalRepository visitedFestivalRepository,
-            JwtUtil jwtUtil
+            JwtUtil jwtUtil,
+            CultureJourneyService cultureJourneyService
     ) {
         this.visitedFestivalRepository = visitedFestivalRepository;
         this.jwtUtil = jwtUtil;
+        this.cultureJourneyService = cultureJourneyService;
     }
 
     // 4/27 내가 간 행사 목록 조회
@@ -32,6 +37,14 @@ public class VisitedFestivalController {
     ) {
         String email = extractEmail(authHeader);
         return visitedFestivalRepository.findByUserEmailOrderByVisitedAtDesc(email);
+    }
+
+    @GetMapping("/api/me/journey")
+    public CultureJourneyResponse getMyJourney(
+            @RequestHeader(name = "Authorization", required = false) String authHeader
+    ) {
+        String email = extractEmail(authHeader);
+        return cultureJourneyService.getJourney(email);
     }
 
     // 4/27 내가 간 행사 추가

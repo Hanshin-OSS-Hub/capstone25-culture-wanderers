@@ -5,9 +5,16 @@ const AuthContext = createContext(null);
 
 const STORAGE_KEY = "loggedInUser";
 const TOKEN_KEY = "token";
+const NICKNAME_KEY = "nickname";
 
 function getStoredValue(key) {
   return localStorage.getItem(key) || sessionStorage.getItem(key);
+}
+
+function getStorageByStoredUser() {
+  if (localStorage.getItem(STORAGE_KEY)) return localStorage;
+  if (sessionStorage.getItem(STORAGE_KEY)) return sessionStorage;
+  return localStorage;
 }
 
 function clearStoredAuth() {
@@ -15,11 +22,23 @@ function clearStoredAuth() {
   sessionStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(TOKEN_KEY);
   sessionStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(NICKNAME_KEY);
+  sessionStorage.removeItem(NICKNAME_KEY);
+}
+
+function storeNickname(nickname) {
+  const safeNickname = String(nickname || "").trim();
+  const storage = getStorageByStoredUser();
+
+  localStorage.removeItem(NICKNAME_KEY);
+  sessionStorage.removeItem(NICKNAME_KEY);
+
+  if (safeNickname) {
+    storage.setItem(NICKNAME_KEY, safeNickname);
+  }
 }
 
 export function AuthProvider({ children }) {
-  //console.log("AuthProvider mounted");
-
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -40,9 +59,11 @@ export function AuthProvider({ children }) {
         },
       });
 
-      setUser(res.data?.data || res.data);
-    } catch (e) {
-      console.error("refreshMe 실패:", e);
+      const nextUser = res.data?.data || res.data;
+      setUser(nextUser);
+      storeNickname(nextUser?.nickname || nextUser?.email?.split("@")[0] || "");
+    } catch (error) {
+      console.error("refreshMe 실패:", error);
       clearStoredAuth();
       setUser(null);
     }
@@ -61,8 +82,9 @@ export function AuthProvider({ children }) {
       storage.setItem(TOKEN_KEY, token);
       await refreshMe();
     } else {
-      // 토큰 없이 더미/임시 로그인 대응
-      setUser({ email, nickname: email.split("@")[0] });
+      const fallbackNickname = email.split("@")[0];
+      storeNickname(fallbackNickname);
+      setUser({ email, nickname: fallbackNickname });
     }
 
     return res;
@@ -73,6 +95,7 @@ export function AuthProvider({ children }) {
 
     clearStoredAuth();
     storage.setItem(STORAGE_KEY, email);
+    storage.setItem(NICKNAME_KEY, email.split("@")[0]);
 
     setUser({
       email,
@@ -95,8 +118,8 @@ export function AuthProvider({ children }) {
           }
         );
       }
-    } catch (e) {
-      console.error("logout API 실패:", e);
+    } catch (error) {
+      console.error("logout API 실패:", error);
     }
 
     clearStoredAuth();
@@ -114,7 +137,6 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      // 실제 로그인 토큰 있으면 /api/me 호출
       if (storedToken) {
         try {
           await refreshMe();
@@ -124,11 +146,12 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      // 토큰 없으면 더미 로그인 상태로 간주
+      const fallbackNickname = getStoredValue(NICKNAME_KEY) || storedUser.split("@")[0];
       setUser({
         email: storedUser,
-        nickname: storedUser.split("@")[0],
+        nickname: fallbackNickname,
       });
+      storeNickname(fallbackNickname);
       setLoading(false);
     };
 

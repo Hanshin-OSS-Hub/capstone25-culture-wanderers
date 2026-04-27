@@ -5,7 +5,6 @@ import App from "./App.jsx";
 import { AuthProvider } from "./auth/AuthContext";
 import "./index.css";
 
-console.log("main.jsx loaded", AuthProvider); //  2026.02.02
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -16,3 +15,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </BrowserRouter>
   </React.StrictMode>
 );
+

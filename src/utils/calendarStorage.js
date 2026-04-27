@@ -1,4 +1,5 @@
-const CALENDAR_STORAGE_KEY = 'mypage_calendar_events';
+const CALENDAR_STORAGE_PREFIX = "mypage_calendar_events";
+const LEGACY_CALENDAR_STORAGE_KEY = "mypage_calendar_events";
 
 function safeParse(json, fallback = []) {
   try {
@@ -9,22 +10,65 @@ function safeParse(json, fallback = []) {
   }
 }
 
-export function getCalendarEvents() {
-  return safeParse(localStorage.getItem(CALENDAR_STORAGE_KEY), []);
+function getStoredUserEmail() {
+  return (
+    localStorage.getItem("loggedInUser") ||
+    sessionStorage.getItem("loggedInUser") ||
+    localStorage.getItem("email") ||
+    sessionStorage.getItem("email") ||
+    ""
+  )
+    .trim()
+    .toLowerCase();
 }
 
-export function saveCalendarEvents(events) {
-  localStorage.setItem(CALENDAR_STORAGE_KEY, JSON.stringify(events));
-  window.dispatchEvent(new Event('calendar-events-changed'));
+function getCalendarStorageKey(userEmail = getStoredUserEmail()) {
+  const normalized = String(userEmail || "").trim().toLowerCase();
+  return normalized
+    ? `${CALENDAR_STORAGE_PREFIX}:${normalized}`
+    : `${CALENDAR_STORAGE_PREFIX}:guest`;
 }
 
-export function addCalendarEvent(event) {
-  const events = getCalendarEvents();
+function dispatchCalendarChange(userEmail = getStoredUserEmail()) {
+  window.dispatchEvent(
+    new CustomEvent("calendar-events-changed", {
+      detail: { userEmail: String(userEmail || "").trim().toLowerCase() },
+    })
+  );
+}
+
+function migrateLegacyEventsIfNeeded(userEmail = getStoredUserEmail()) {
+  const key = getCalendarStorageKey(userEmail);
+  const existing = safeParse(localStorage.getItem(key), []);
+  if (existing.length > 0) return existing;
+
+  const legacy = safeParse(localStorage.getItem(LEGACY_CALENDAR_STORAGE_KEY), []);
+  if (legacy.length === 0) return existing;
+
+  localStorage.setItem(key, JSON.stringify(legacy));
+  localStorage.removeItem(LEGACY_CALENDAR_STORAGE_KEY);
+  return legacy;
+}
+
+export function getCalendarEvents(userEmail = getStoredUserEmail()) {
+  const migrated = migrateLegacyEventsIfNeeded(userEmail);
+  if (migrated.length > 0) {
+    return migrated;
+  }
+
+  return safeParse(localStorage.getItem(getCalendarStorageKey(userEmail)), []);
+}
+
+export function saveCalendarEvents(events, userEmail = getStoredUserEmail()) {
+  localStorage.setItem(getCalendarStorageKey(userEmail), JSON.stringify(events));
+  dispatchCalendarChange(userEmail);
+}
+
+export function addCalendarEvent(event, userEmail = getStoredUserEmail()) {
+  const events = getCalendarEvents(userEmail);
 
   const exists = events.some(
-    (item) =>
-      item.date === event.date &&
-      item.title === event.title
+    (item) => item.date === event.date && item.title === event.title
   );
 
   if (exists) return { added: false, events };
@@ -34,19 +78,22 @@ export function addCalendarEvent(event) {
       id: Date.now(),
       date: event.date,
       title: event.title,
-      location: event.location || '',
-      description: event.description || '',
-      festivalPeriod: event.festivalPeriod || '',
+      location: event.location || "",
+      description: event.description || "",
+      festivalPeriod: event.festivalPeriod || "",
+      festivalId: event.festivalId || null,
+      communityType: event.communityType || "",
+      communityId: event.communityId || null,
     },
     ...events,
   ];
 
-  saveCalendarEvents(next);
+  saveCalendarEvents(next, userEmail);
   return { added: true, events: next };
 }
 
-export function removeCalendarEvent(id) {
-  const next = getCalendarEvents().filter((item) => item.id !== id);
-  saveCalendarEvents(next);
+export function removeCalendarEvent(id, userEmail = getStoredUserEmail()) {
+  const next = getCalendarEvents(userEmail).filter((item) => item.id !== id);
+  saveCalendarEvents(next, userEmail);
   return next;
 }

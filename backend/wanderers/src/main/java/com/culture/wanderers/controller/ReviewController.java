@@ -94,7 +94,9 @@ package com.culture.wanderers.controller;
 
 import com.culture.wanderers.entity.Review;
 import com.culture.wanderers.jwt.JwtUtil;
+import com.culture.wanderers.repository.CommentRepository;
 import com.culture.wanderers.repository.ReviewRepository;
+import com.culture.wanderers.service.UserActivityService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -107,11 +109,27 @@ import java.util.List;
 public class ReviewController {
 
     private final ReviewRepository reviewRepository;
+    private final CommentRepository commentRepository;
     private final JwtUtil jwtUtil;
+    private final UserActivityService userActivityService;
 
-    public ReviewController(ReviewRepository reviewRepository, JwtUtil jwtUtil) {
+    public ReviewController(
+            ReviewRepository reviewRepository,
+            CommentRepository commentRepository,
+            JwtUtil jwtUtil,
+            UserActivityService userActivityService
+    ) {
         this.reviewRepository = reviewRepository;
+        this.commentRepository = commentRepository;
         this.jwtUtil = jwtUtil;
+        this.userActivityService = userActivityService;
+    }
+
+    @GetMapping("/api/reviews")
+    public List<Review> getReviews() {
+        List<Review> reviews = reviewRepository.findAllByOrderByCreatedAtDesc();
+        reviews.forEach(this::attachCommentCount);
+        return reviews;
     }
 
     @GetMapping("/api/me/reviews")
@@ -119,7 +137,9 @@ public class ReviewController {
             @RequestHeader(name = "Authorization", required = false) String authHeader
     ) {
         String email = extractEmailFromHeader(authHeader);
-        return reviewRepository.findByAuthorEmail(email);
+        List<Review> reviews = reviewRepository.findByAuthorEmail(email);
+        reviews.forEach(this::attachCommentCount);
+        return reviews;
     }
 
     @PostMapping("/api/reviews")
@@ -129,16 +149,31 @@ public class ReviewController {
     ) {
         String email = extractEmailFromHeader(authHeader);
 
+        if (review.getTargetId() == null) {
+            review.setTargetId(0L);
+        }
+        if (review.getTargetType() == null || review.getTargetType().isBlank()) {
+            review.setTargetType("festival");
+        }
+
         review.setAuthorEmail(email);
         review.setCreatedAt(LocalDate.now());
 
-        return reviewRepository.save(review);
+        Review savedReview = reviewRepository.save(review);
+
+        if ("festival".equalsIgnoreCase(savedReview.getTargetType())) {
+            userActivityService.save(email, "review", savedReview.getTargetId(), null, null, savedReview.getTargetTitle());
+        }
+
+        return savedReview;
     }
 
     @GetMapping("/api/reviews/{id}")
     public Review getReview(@PathVariable Long id) {
-        return reviewRepository.findById(id)
+        Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "후기 없음"));
+        attachCommentCount(review);
+        return review;
     }
 
     @GetMapping("/api/reviews/average")
@@ -200,5 +235,13 @@ public class ReviewController {
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "토큰 오류/만료");
         }
+    }
+
+    private void attachCommentCount(Review review) {
+        if (review == null || review.getId() == null) {
+            return;
+        }
+        long count = commentRepository.countByTargetTypeAndTargetId("REVIEW", review.getId());
+        review.setCommentCount(count);
     }
 }

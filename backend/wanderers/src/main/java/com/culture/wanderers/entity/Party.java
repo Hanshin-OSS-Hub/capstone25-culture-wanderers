@@ -1,27 +1,15 @@
-// package com.culture.wanderers.entity;
-// import jakarta.persistence.*;
-// import lombok.Getter;
-// import lombok.Setter;
-// import java.time.LocalDateTime;
-// @Entity @Getter @Setter public class Party {
-//     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
-//     private String title;
-//     private String content;
-//     private String category; // 공연, 전시 등
-//     private int maxPeople; // 모집 인원
-//     private int currentPeople; // 현재 참여 인원
-//     private LocalDateTime meetingTime; // 만날 시간
-//     private String location; // 만날 장소
-//     private String status; // 모집중, 마감 등
-//     private LocalDateTime createdAt;
-// }
 package com.culture.wanderers.entity;
 
-import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "parties")
@@ -33,25 +21,25 @@ public class Party {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 작성자
     private String authorEmail;
 
     private String title;
     private String content;
-    private String category; // 공연, 전시 등
-
-    private int maxPeople; // 모집 인원
-    private int currentPeople; // 현재 참여 인원
-
-    private LocalDateTime meetingTime; // 만날 시간
-    private String location; // 만날 장소
-
-    private String status; // 모집중, 마감 등
-
+    private String category;
+    private int maxPeople;
+    private int currentPeople;
+    private LocalDateTime meetingTime;
+    private LocalDateTime deadline;
+    private String location;
+    private String contact;
+    private String status;
     private LocalDateTime createdAt;
-
     private Long festivalId;
-
     private String festivalTitle;
 
+    @Transient
+    private Long commentCount;
+
+    @Transient
+    private String authorNickname;
 }

@@ -1,0 +1,267 @@
+.mypage-preference-card {
+  margin: 6px 0 20px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  border: 1px solid #f1e4ee;
+  background: #ffffff;
+}
+
+.preference-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.preference-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.preference-subtitle {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.preference-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.preference-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 12px;
+  background: #fff9fc;
+  border: 1px solid #f7dce9;
+}
+
+.preference-item.wide {
+  grid-column: 1 / -1;
+}
+
+.preference-item .label {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.preference-item .value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f45c8a;
+}
+
+.preference-editor {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f5e6ef;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.preference-editor-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.preference-editor-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.preference-chip-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.preference-chip {
+  border: 1px solid #f4d5e4;
+  background: #ffffff;
+  color: #6b7280;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.preference-chip.active {
+  background: #fff2f7;
+  border-color: #ffb8d0;
+  color: #f45c8a;
+}
+
+.preference-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.preference-tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.preference-tag.active {
+  background: #fff2f7;
+  color: #f45c8a;
+  border: 1px solid #ffd3e3;
+}
+
+.preference-tag.muted {
+  background: #f9fafb;
+  color: #9ca3af;
+  border: 1px solid #e5e7eb;
+}
+
+.preference-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+  .preference-card-header {
+    flex-direction: column;
+  }
+
+  .preference-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.journey-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.journey-detail-box {
+  padding: 12px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #ffe1f0;
+}
+
+.journey-detail-label {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-bottom: 5px;
+}
+
+.journey-detail-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f45c8a;
+}
+
+.journey-history-card {
+  margin: -6px 0 20px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid #f1e4ee;
+  background: #ffffff;
+}
+
+.journey-history-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.journey-history-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.journey-history-subtitle {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.journey-region-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.journey-region-tags span {
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #fff3f8;
+  color: #f45c8a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.journey-visit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.journey-visit-item {
+  width: 100%;
+  border: 1px solid #f1e4ee;
+  background: #fffafd;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.journey-visit-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.journey-visit-meta {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.journey-visit-item > span {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 700;
+  color: #f45c8a;
+}
+
+@media (max-width: 640px) {
+  .journey-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .journey-history-header {
+    flex-direction: column;
+  }
+
+  .journey-region-tags {
+    justify-content: flex-start;
+  }
+}

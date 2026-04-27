@@ -1,17 +1,29 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { authFetch } from "../api/authFetch";
 import "./Community.css";
 
 export default function CommunityWrite() {
-  const { type } = useParams(); // question | review
+  const { type } = useParams(); // question | review | free
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState("review"); // 기본 탭
   const [rating, setRating] = useState(0);
+  const [questionTitle, setQuestionTitle] = useState("");
+  const [questionContent, setQuestionContent] = useState("");
+  const [questionRegion, setQuestionRegion] = useState("서울");
+  const [reviewTargetTitle, setReviewTargetTitle] = useState("");
+  const [reviewCategory, setReviewCategory] = useState("축제");
+  const [reviewTitle, setReviewTitle] = useState("");
+  const [reviewContent, setReviewContent] = useState("");
+  const [freeTitle, setFreeTitle] = useState("");
+  const [freeContent, setFreeContent] = useState("");
+  const [freeRegion, setFreeRegion] = useState("서울");
+  const [submitting, setSubmitting] = useState(false);
 
   // URL 파라미터에 따라 탭 초기값 설정
   useEffect(() => {
-    if (type === "question" || type === "review") {
+    if (type === "question" || type === "review" || type === "free") {
       setActiveTab(type);
     }
   }, [type]);
@@ -20,6 +32,98 @@ export default function CommunityWrite() {
     setActiveTab(tab);
     navigate(`/community/write/${tab}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleFreeSubmit = async () => {
+    if (!freeTitle.trim() || !freeContent.trim()) {
+      alert("자유글 제목과 내용을 입력해주세요.");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await authFetch("/api/posts", {
+        method: "POST",
+        body: JSON.stringify({
+          type: "FREE",
+          title: freeTitle.trim(),
+          content: freeContent.trim(),
+          regionTag: freeRegion,
+        }),
+      });
+
+      alert("자유글이 등록되었습니다.");
+      navigate("/community?tab=free");
+    } catch (e) {
+      console.error("자유글 등록 실패:", e);
+      alert(e.message || "자유글 등록에 실패했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleQuestionSubmit = async () => {
+    if (!questionTitle.trim() || !questionContent.trim()) {
+      alert("질문 제목과 내용을 입력해주세요.");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await authFetch("/api/posts", {
+        method: "POST",
+        body: JSON.stringify({
+          type: "QUESTION",
+          title: questionTitle.trim(),
+          content: questionContent.trim(),
+          regionTag: questionRegion,
+        }),
+      });
+
+      alert("질문이 등록되었습니다.");
+      navigate("/community?tab=question");
+    } catch (e) {
+      console.error("질문 등록 실패:", e);
+      alert(e.message || "질문 등록에 실패했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleReviewSubmit = async () => {
+    if (!reviewTargetTitle.trim() || !reviewTitle.trim() || !reviewContent.trim() || !rating) {
+      alert("리뷰 대상, 제목, 내용, 평점을 모두 입력해주세요.");
+      return;
+    }
+
+    const targetTypeMap = {
+      축제: "festival",
+      공연: "party",
+      전시: "artgallery",
+      기타: "festival",
+    };
+
+    try {
+      setSubmitting(true);
+      await authFetch("/api/reviews", {
+        method: "POST",
+        body: JSON.stringify({
+          targetType: targetTypeMap[reviewCategory] || "festival",
+          targetTitle: reviewTargetTitle.trim(),
+          title: reviewTitle.trim(),
+          content: reviewContent.trim(),
+          rating,
+        }),
+      });
+
+      alert("리뷰가 등록되었습니다.");
+      navigate("/community?tab=review");
+    } catch (e) {
+      console.error("리뷰 등록 실패:", e);
+      alert(e.message || "리뷰 등록에 실패했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const renderQuestionForm = () => (
@@ -33,6 +137,8 @@ export default function CommunityWrite() {
           <input
             className="cm-input"
             placeholder="축제 관련 궁금한 내용을 한 줄로 적어주세요"
+            value={questionTitle}
+            onChange={(e) => setQuestionTitle(e.target.value)}
           />
         </div>
 
@@ -43,19 +149,21 @@ export default function CommunityWrite() {
           <textarea
             className="cm-textarea"
             placeholder="궁금한 점을 자세히 적어주시면 더 도움이 되는 답변을 받을 수 있어요."
+            value={questionContent}
+            onChange={(e) => setQuestionContent(e.target.value)}
           />
         </div>
 
         <div className="cm-write-row cm-write-row-tags">
-          <label className="cm-write-label">태그 (최대 5개)</label>
+          <label className="cm-write-label">지역 태그</label>
           <div className="cm-tag-row">
-            <input
-              className="cm-input"
-              placeholder="태그 입력 후 Enter 또는 추가 버튼"
-            />
-            <button type="button" className="cm-tag-add-btn">
-              추가
-            </button>
+            <select className="cm-select" value={questionRegion} onChange={(e) => setQuestionRegion(e.target.value)}>
+              <option>서울</option>
+              <option>부산</option>
+              <option>경기</option>
+              <option>인천</option>
+              <option>기타</option>
+            </select>
           </div>
         </div>
 
@@ -76,8 +184,8 @@ export default function CommunityWrite() {
           >
             취소
           </button>
-          <button type="button" className="cm-btn-primary">
-            등록하기
+          <button type="button" className="cm-btn-primary" onClick={handleQuestionSubmit} disabled={submitting}>
+            {submitting ? "등록 중..." : "등록하기"}
           </button>
         </div>
       </div>
@@ -97,6 +205,8 @@ export default function CommunityWrite() {
           <input
             className="cm-input"
             placeholder="행사 이름을 검색하거나 입력해주세요"
+            value={reviewTargetTitle}
+            onChange={(e) => setReviewTargetTitle(e.target.value)}
           />
         </div>
 
@@ -105,10 +215,7 @@ export default function CommunityWrite() {
           <label className="cm-write-label">
             카테고리 <span className="cm-required">*</span>
           </label>
-          <select className="cm-select" defaultValue="">
-            <option value="" disabled>
-              카테고리를 선택해주세요
-            </option>
+          <select className="cm-select" value={reviewCategory} onChange={(e) => setReviewCategory(e.target.value)}>
             <option>축제</option>
             <option>공연</option>
             <option>전시</option>
@@ -157,8 +264,10 @@ export default function CommunityWrite() {
           <input
             className="cm-input"
             placeholder="행사를 한 줄로 표현해보세요"
+            value={reviewTitle}
+            onChange={(e) => setReviewTitle(e.target.value)}
           />
-          <div className="cm-length-helper">0 / 50</div>
+          <div className="cm-length-helper">{reviewTitle.length} / 50</div>
         </div>
 
         {/* 상세 후기 */}
@@ -169,8 +278,10 @@ export default function CommunityWrite() {
           <textarea
             className="cm-textarea tall"
             placeholder="행사에 대한 솔직한 후기를 자유롭게 적어주세요. (최소 50자)"
+            value={reviewContent}
+            onChange={(e) => setReviewContent(e.target.value)}
           />
-          <div className="cm-length-helper">0 / 최소 50자</div>
+          <div className="cm-length-helper">{reviewContent.length} / 최소 50자</div>
         </div>
 
         {/* 작성 가이드 */}
@@ -192,8 +303,65 @@ export default function CommunityWrite() {
           >
             취소
           </button>
-          <button type="button" className="cm-btn-primary">
-            등록하기
+          <button type="button" className="cm-btn-primary" onClick={handleReviewSubmit} disabled={submitting}>
+            {submitting ? "등록 중..." : "등록하기"}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+
+  const renderFreeForm = () => (
+    <>
+      <h1 className="cm-write-title">자유글 작성하기</h1>
+      <div className="cm-write-card">
+        <div className="cm-write-row">
+          <label className="cm-write-label">
+            제목 <span className="cm-required">*</span>
+          </label>
+          <input
+            className="cm-input"
+            placeholder="자유롭게 공유할 주제를 적어주세요"
+            value={freeTitle}
+            onChange={(e) => setFreeTitle(e.target.value)}
+          />
+        </div>
+
+        <div className="cm-write-row">
+          <label className="cm-write-label">
+            내용 <span className="cm-required">*</span>
+          </label>
+          <textarea
+            className="cm-textarea"
+            placeholder="경험, 팁, 추천 코스 등을 자유롭게 작성해주세요."
+            value={freeContent}
+            onChange={(e) => setFreeContent(e.target.value)}
+          />
+        </div>
+
+        <div className="cm-write-row cm-write-row-tags">
+          <label className="cm-write-label">지역 태그</label>
+          <div className="cm-tag-row">
+            <select className="cm-select" value={freeRegion} onChange={(e) => setFreeRegion(e.target.value)}>
+              <option>서울</option>
+              <option>부산</option>
+              <option>경기</option>
+              <option>인천</option>
+              <option>기타</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="cm-write-actions">
+          <button
+            type="button"
+            className="cm-btn-secondary"
+            onClick={() => navigate("/community")}
+          >
+            취소
+          </button>
+          <button type="button" className="cm-btn-primary" onClick={handleFreeSubmit} disabled={submitting}>
+            {submitting ? "등록 중..." : "등록하기"}
           </button>
         </div>
       </div>
@@ -230,10 +398,23 @@ export default function CommunityWrite() {
         >
           리뷰 게시판
         </button>
+        <button
+          type="button"
+          className={
+            activeTab === "free" ? "cm-write-tab active" : "cm-write-tab"
+          }
+          onClick={() => handleTab("free")}
+        >
+          자유게시판
+        </button>
       </div>
 
       {/* 선택된 탭에 따라 폼 렌더링 */}
-      {activeTab === "question" ? renderQuestionForm() : renderReviewForm()}
+      {activeTab === "question"
+        ? renderQuestionForm()
+        : activeTab === "review"
+        ? renderReviewForm()
+        : renderFreeForm()}
     </div>
   );
 }

@@ -54,7 +54,6 @@ public class Review {
     private String targetType;
 
     // 축제 id 또는 파티 id
-    @Column(nullable = false)
     private Long targetId;
 
     // 화면 표시용 제목
@@ -70,4 +69,7 @@ public class Review {
     private String content;
 
     private LocalDate createdAt;
+
+    @Transient
+    private Long commentCount;
 }

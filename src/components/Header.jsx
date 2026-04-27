@@ -34,7 +34,7 @@ export default function Header() {
           <Link to="/search">축제 탐색</Link>
           <Link to="/party">파티 모집</Link>
           <Link to="/community">커뮤니티</Link>
-          <Link to="/benefits">학생 할인 모아보기</Link>
+          <Link to="/benefits">할인정보 모아보기</Link>
           <Link to="/mypage">마이페이지</Link>
         </nav>
       </div>

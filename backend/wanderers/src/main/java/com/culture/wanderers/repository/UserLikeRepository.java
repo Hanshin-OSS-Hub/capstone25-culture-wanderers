@@ -16,6 +16,8 @@ public interface UserLikeRepository extends JpaRepository<UserLike, Long> {
 
     boolean existsByUserEmailAndTargetTypeAndTargetId(String userEmail, String targetType, Long targetId);
 
+    long countByTargetTypeIgnoreCaseAndTargetId(String targetType, Long targetId);
+
     void deleteByUserEmail(String userEmail);
 
     //void deleteByUserEmailAndTargetTypeAndTargetId(String userEmail, String targetType, Long targetId);

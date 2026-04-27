@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import {
-  getCalendarEvents,
   addCalendarEvent,
+  getCalendarEvents,
   removeCalendarEvent,
 } from "../../utils/calendarStorage";
 
 export default function CalendarPage() {
+  const navigate = useNavigate();
   const [events, setEvents] = useState([]);
   const [date, setDate] = useState("");
   const [title, setTitle] = useState("");
@@ -25,8 +28,8 @@ export default function CalendarPage() {
     };
   }, []);
 
-  const addEvent = (e) => {
-    e.preventDefault();
+  const addEvent = (event) => {
+    event.preventDefault();
 
     if (!date || !title.trim()) {
       alert("날짜와 제목을 입력해주세요.");
@@ -58,6 +61,17 @@ export default function CalendarPage() {
     setEvents(next);
   };
 
+  const handleOpenEvent = (event) => {
+    if (event?.festivalId) {
+      navigate(`/detail/${event.festivalId}`);
+      return;
+    }
+
+    if (event?.communityType && event?.communityId) {
+      navigate(`/community/${event.communityType}/${event.communityId}`);
+    }
+  };
+
   return (
     <div className="mypage-main-panel">
       <h2 className="mypage-section-title">캘린더·일정</h2>
@@ -82,13 +96,20 @@ export default function CalendarPage() {
 
       <div style={{ marginTop: 14, display: "grid", gap: 8 }}>
         {events.length === 0 ? (
-          <div style={{ padding: 16, color: "#6b7280" }}>
-            등록된 일정이 없어요.
-          </div>
+          <div style={{ padding: 16, color: "#6b7280" }}>등록된 일정이 없어요.</div>
         ) : (
           events.map((ev) => (
             <div
               key={ev.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => handleOpenEvent(ev)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleOpenEvent(ev);
+                }
+              }}
               style={{
                 border: "1px solid #f1e4ee",
                 borderRadius: 12,
@@ -97,6 +118,10 @@ export default function CalendarPage() {
                 justifyContent: "space-between",
                 alignItems: "center",
                 gap: 12,
+                cursor:
+                  ev?.festivalId || (ev?.communityType && ev?.communityId)
+                    ? "pointer"
+                    : "default",
               }}
             >
               <div>
@@ -107,26 +132,23 @@ export default function CalendarPage() {
 
                 {ev.location ? (
                   <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>
-                    📍 {ev.location}
+                    장소 {ev.location}
                   </div>
                 ) : null}
 
                 {ev.festivalPeriod ? (
                   <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>
-                    📅 행사 기간: {ev.festivalPeriod}
-                  </div>
-                ) : null}
-
-                {ev.description ? (
-                  <div style={{ fontSize: 13, color: "#9ca3af", marginTop: 4 }}>
-                    {ev.description}
+                    행사 기간 {ev.festivalPeriod}
                   </div>
                 ) : null}
               </div>
 
               <button
                 type="button"
-                onClick={() => handleRemoveEvent(ev.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveEvent(ev.id);
+                }}
                 style={{
                   height: 32,
                   borderRadius: 10,

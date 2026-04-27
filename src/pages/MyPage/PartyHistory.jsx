@@ -1,9 +1,44 @@
 // src/pages/MyPage/PartyHistory.jsx
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { authFetch } from "../../api/authFetch";
 
 export default function PartyHistory() {
-  // 현재는 백엔드 연동 전이라 빈 배열
-  const parties = [];
+  const navigate = useNavigate();
+  const [parties, setParties] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchParties = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        const data = await authFetch("/api/me/parties");
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.data)
+          ? data.data
+          : [];
+        setParties(list);
+      } catch (e) {
+        console.error("참여한 파티 조회 실패:", e);
+        setError("참여한 파티를 불러오지 못했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchParties();
+  }, []);
+
+  if (loading) {
+    return <div className="mypage-main-panel">참여한 파티를 불러오는 중...</div>;
+  }
+
+  if (error) {
+    return <div className="mypage-main-panel">{error}</div>;
+  }
 
   return (
     <div className="mypage-main-panel">
@@ -27,6 +62,15 @@ export default function PartyHistory() {
           {parties.map((p) => (
             <div
               key={p.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate(`/party/${p.id}`)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  navigate(`/party/${p.id}`);
+                }
+              }}
               style={{
                 border: "1px solid #f1e4ee",
                 borderRadius: 12,
@@ -35,10 +79,11 @@ export default function PartyHistory() {
                 justifyContent: "space-between",
                 alignItems: "center",
                 background: "#fff",
+                cursor: "pointer",
               }}
             >
               <div>
-                <div style={{ fontWeight: 700 }}>{p.name}</div>
+                <div style={{ fontWeight: 700 }}>{p.title || "파티"}</div>
                 <div
                   style={{
                     fontSize: 13,
@@ -46,11 +91,32 @@ export default function PartyHistory() {
                     marginTop: 2,
                   }}
                 >
-                  {p.date}
+                  {p.meetingTime ? String(p.meetingTime).replace("T", " ").slice(0, 16) : "일정 없음"}
                 </div>
+                {p.festivalId ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/detail/${p.festivalId}`);
+                    }}
+                    style={{
+                      marginTop: 8,
+                      border: "1px solid #ffd3e3",
+                      background: "#fff9fc",
+                      color: "#ff538b",
+                      borderRadius: 8,
+                      padding: "4px 8px",
+                      fontSize: 12,
+                      cursor: "pointer",
+                    }}
+                  >
+                    축제 상세 보기
+                  </button>
+                ) : null}
               </div>
 
-              <span style={badgeStyle(p.status)}>{p.status}</span>
+              <span style={badgeStyle(p.status || "진행중")}>{p.status || "진행중"}</span>
             </div>
           ))}
         </div>

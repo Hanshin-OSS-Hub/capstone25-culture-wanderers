@@ -1,13 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { authFetch } from '../api/authFetch';
-import { isFestivalLiked, toggleFestivalLike } from '../utils/likeStorage';
+import { saveActivity } from '../api/activity';
+import { addFestivalLike, isFestivalLiked, removeFestivalLike } from '../utils/likeStorage';
 import { addCalendarEvent } from '../utils/calendarStorage';
 import '../App.css';
 
-const KAKAO_MAP_KEY = import.meta.env.VITE_KAKAO_MAP_KEY;
-console.log("KEY:", KAKAO_MAP_KEY);
+const KAKAO_MAP_KEY = (import.meta.env.VITE_KAKAO_MAP_KEY || "").trim();
+const hasStoredAuth =
+  Boolean(localStorage.getItem("token")) || Boolean(sessionStorage.getItem("token"));
 
 function loadKakaoMapSdk() {
   return new Promise((resolve, reject) => {
@@ -58,8 +60,6 @@ function loadKakaoMapSdk() {
     script.id = 'kakao-map-sdk';
     script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_MAP_KEY.trim()}&autoload=false&libraries=services`;
     script.async = true;
-
-    console.log("카카오 SDK URL:", script.src);
 
     script.onload = onLoadKakao;
     script.onerror = () => {
@@ -136,8 +136,21 @@ export default function Detail() {
         const festivalData = festivalRes.data;
 
         setFestival(festivalData);
-        setLiked(isFestivalLiked(festivalData?.id));
         setVisitDate(getDefaultVisitDate(festivalData));
+
+        try {
+          const likes = await authFetch('/api/me/likes');
+          const likedOnServer = Array.isArray(likes)
+            ? likes.some(
+                (item) =>
+                  String(item.targetType || '').toLowerCase() === 'festival' &&
+                  Number(item.targetId) === Number(festivalData?.id)
+              )
+            : false;
+          setLiked(likedOnServer);
+        } catch (error) {
+          setLiked(isFestivalLiked(festivalData?.id));
+        }
 
         try {
           const partyRes = await axios.get(`http://localhost:8080/api/party-posts/festival/${festivalData.id}`);
@@ -335,6 +348,11 @@ export default function Detail() {
 
   useEffect(() => {
     const checkVisited = async () => {
+      if (!hasStoredAuth) {
+        setIsVisited(false);
+        return;
+      }
+
       try {
         const data = await authFetch("/api/me/visited-festivals");
 
@@ -345,13 +363,24 @@ export default function Detail() {
         setIsVisited(visited);
       } catch (error) {
         console.error("내가 간 행사 처리 실패:", error);
-        alert("내가 간 행사 처리에 실패했습니다.");
+        setIsVisited(false);
       }
     };
 
     if (festival?.id) {
       checkVisited();
     }
+  }, [festival]);
+
+  useEffect(() => {
+    if (!festival) return;
+
+    saveActivity({
+      actionType: 'view',
+      festivalId: festival.id,
+      region: festival.region,
+      category: festival.category,
+    });
   }, [festival]);
 
   if (loading) return <div className="loading-box">데이터를 불러오는 중...</div>;
@@ -391,9 +420,38 @@ export default function Detail() {
     return '★'.repeat(rating) + '☆'.repeat(5 - rating);
   };
 
-  const handleToggleLike = () => {
-    const nextLiked = toggleFestivalLike(festival);
-    setLiked(nextLiked);
+  const handleToggleLike = async () => {
+    try {
+      if (liked) {
+        await authFetch(`/api/likes?targetType=festival&targetId=${festival.id}`, {
+          method: 'DELETE',
+        });
+        removeFestivalLike(festival.id);
+        setLiked(false);
+        return;
+      }
+
+      await authFetch('/api/likes', {
+        method: 'POST',
+        body: JSON.stringify({
+          targetType: 'festival',
+          targetId: String(festival.id),
+        }),
+      });
+
+      addFestivalLike(festival);
+      setLiked(true);
+
+      saveActivity({
+        actionType: 'like',
+        festivalId: festival.id,
+        region: festival.region,
+        category: festival.category,
+      });
+    } catch (error) {
+      console.error('좋아요 처리 실패:', error);
+      alert('로그인 상태를 확인해주세요.');
+    }
   };
 
   const filteredPartyPosts = partyPosts;
@@ -493,6 +551,7 @@ export default function Detail() {
       location: festival.location || '',
       description: festival.description || '',
       festivalPeriod,
+      festivalId: festival.id,
     });
 
     if (!result.added) {
@@ -525,6 +584,13 @@ export default function Detail() {
           festivalId: festival.id,
           festivalTitle: festival.title,
         }),
+      });
+
+      saveActivity({
+        actionType: 'visited',
+        festivalId: festival.id,
+        region: festival.region,
+        category: festival.category,
       });
 
       setIsVisited(true);
@@ -627,7 +693,7 @@ export default function Detail() {
 
             <div className="detail-tags">
               <span className="badge-outline light">{festival.category || '행사'}</span>
-              <span className="badge-outline light">나들이</span>
+              {isHotFestival ? <span className="badge-outline light">인기</span> : null}
               <span className="badge-outline light">{festival.region}</span>
             </div>
 
@@ -990,7 +1056,7 @@ export default function Detail() {
                       <li
                         key={post.id}
                         style={{ cursor: 'pointer' }}
-                        onClick={() => navigate('/mypage/posts')}
+                        onClick={() => navigate(`/party/${post.id}`)}
                       >
                         {post.title} · 모집 현황 {post.currentPeople ?? 0}/{post.maxPeople ?? 2}
                       </li>

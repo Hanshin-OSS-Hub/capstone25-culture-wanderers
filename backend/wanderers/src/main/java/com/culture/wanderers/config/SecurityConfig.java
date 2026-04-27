@@ -87,12 +87,20 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/auth/**",
+                    "/api/activity",
                     "/api/ai/**",
+                    "/api/recommend/**",
                     "/h2-console/**"
                 ).permitAll()
                 // 4/19 축제 조회/검색 API는 비로그인 접근 허용
                 .requestMatchers(HttpMethod.GET, "/api/festivals").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/festivals/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/posts").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/reviews").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/comments").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/party-posts").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/party-posts/festival/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/party-posts/festival-title").permitAll()
                 .anyRequest().authenticated()

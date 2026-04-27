@@ -1,5 +1,3 @@
-const LIKE_STORAGE_KEY = "festival_likes";
-
 function safeParse(json, fallback = []) {
   try {
     const parsed = JSON.parse(json);
@@ -9,8 +7,29 @@ function safeParse(json, fallback = []) {
   }
 }
 
+function getCurrentUserKey() {
+  const email =
+    localStorage.getItem("loggedInUser") ||
+    sessionStorage.getItem("loggedInUser") ||
+    localStorage.getItem("email") ||
+    sessionStorage.getItem("email") ||
+    "guest";
+
+  return `festival_likes:${String(email).toLowerCase()}`;
+}
+
+function readLikes() {
+  return safeParse(localStorage.getItem(getCurrentUserKey()), []);
+}
+
+function writeLikes(next) {
+  localStorage.setItem(getCurrentUserKey(), JSON.stringify(next));
+  window.dispatchEvent(new Event("festival-likes-changed"));
+  return next;
+}
+
 export function getLikedFestivals() {
-  return safeParse(localStorage.getItem(LIKE_STORAGE_KEY), []);
+  return readLikes();
 }
 
 export function isFestivalLiked(festivalId) {
@@ -31,35 +50,28 @@ export function addFestivalLike(festival) {
       title: festival.title || "",
       region: festival.region || "",
       location: festival.location || "",
-      thumbnail_url: festival.thumbnail_url || "",
-      start_date: festival.start_date || "",
-      end_date: festival.end_date || "",
+      thumbnail_url: festival.thumbnail_url || festival.thumbnailUrl || "",
+      start_date: festival.start_date || festival.startDate || "",
+      end_date: festival.end_date || festival.endDate || "",
       category: festival.category || "",
       likedAt: new Date().toISOString(),
     },
     ...likes,
   ];
 
-  localStorage.setItem(LIKE_STORAGE_KEY, JSON.stringify(next));
-  window.dispatchEvent(new Event("festival-likes-changed"));
-  return next;
+  return writeLikes(next);
 }
 
 export function removeFestivalLike(festivalId) {
   const id = String(festivalId);
   const next = getLikedFestivals().filter((item) => String(item.id) !== id);
-
-  localStorage.setItem(LIKE_STORAGE_KEY, JSON.stringify(next));
-  window.dispatchEvent(new Event("festival-likes-changed"));
-  return next;
+  return writeLikes(next);
 }
 
-export function toggleFestivalLike(festival) {
-  if (isFestivalLiked(festival.id)) {
-    removeFestivalLike(festival.id);
-    return false;
-  }
+export function replaceLikedFestivals(items) {
+  return writeLikes(Array.isArray(items) ? items : []);
+}
 
-  addFestivalLike(festival);
-  return true;
+export function clearLikedFestivals() {
+  return writeLikes([]);
 }

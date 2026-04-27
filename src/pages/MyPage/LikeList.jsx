@@ -1,34 +1,82 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getLikedFestivals, removeFestivalLike } from "../../utils/likeStorage";
+
+import { authFetch } from "../../api/authFetch";
+import { removeFestivalLike, replaceLikedFestivals } from "../../utils/likeStorage";
 
 export default function LikeList() {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const syncLikesFromServer = async () => {
+    try {
+      setLoading(true);
+      const likes = await authFetch("/api/me/likes");
+      const festivalLikes = Array.isArray(likes)
+        ? likes.filter((item) => String(item.targetType || "").toLowerCase() === "festival")
+        : [];
+
+      if (festivalLikes.length === 0) {
+        replaceLikedFestivals([]);
+        setItems([]);
+        return;
+      }
+
+      const params = new URLSearchParams();
+      festivalLikes.forEach((item) => {
+        params.append("ids", item.targetId);
+      });
+
+      const summaries = await authFetch(`/api/festivals/summaries?${params.toString()}`);
+      const summaryList = Array.isArray(summaries) ? summaries : [];
+
+      const mapped = summaryList.map((item) => ({
+        id: item.id,
+        title: item.title || "",
+        region: item.region || "",
+        location: item.location || "",
+        thumbnail_url: item.thumbnailUrl || item.thumbnail_url || "",
+        start_date: item.startDate || item.start_date || "",
+        end_date: item.endDate || item.end_date || "",
+        category: item.category || "",
+      }));
+
+      replaceLikedFestivals(mapped);
+      setItems(mapped);
+    } catch (error) {
+      console.error("좋아요 목록 불러오기 실패:", error);
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const syncLikes = () => {
-      setItems(getLikedFestivals());
-    };
+    syncLikesFromServer();
 
-    syncLikes();
-    window.addEventListener("festival-likes-changed", syncLikes);
-    window.addEventListener("storage", syncLikes);
-
+    window.addEventListener("festival-likes-changed", syncLikesFromServer);
     return () => {
-      window.removeEventListener("festival-likes-changed", syncLikes);
-      window.removeEventListener("storage", syncLikes);
+      window.removeEventListener("festival-likes-changed", syncLikesFromServer);
     };
   }, []);
 
-  const handleUnlike = (e, id) => {
+  const handleUnlike = async (e, id) => {
     e.stopPropagation();
 
     const ok = window.confirm("좋아요를 해제할까요?");
     if (!ok) return;
 
-    removeFestivalLike(id);
-    setItems(getLikedFestivals());
+    try {
+      await authFetch(`/api/likes?targetType=festival&targetId=${id}`, {
+        method: "DELETE",
+      });
+      removeFestivalLike(id);
+      setItems((prev) => prev.filter((item) => String(item.id) !== String(id)));
+    } catch (error) {
+      console.error("좋아요 해제 실패:", error);
+      alert("좋아요 해제에 실패했어요.");
+    }
   };
 
   const formatDate = (value) => {
@@ -54,10 +102,10 @@ export default function LikeList() {
     <div className="mypage-main-panel">
       <h2 className="mypage-section-title">좋아요 리스트</h2>
 
-      {items.length === 0 ? (
-        <div style={{ padding: 16, color: "#6b7280" }}>
-          아직 좋아요한 행사가 없어요.
-        </div>
+      {loading ? (
+        <div style={{ padding: 16, color: "#6b7280" }}>좋아요 목록을 불러오는 중이에요.</div>
+      ) : items.length === 0 ? (
+        <div style={{ padding: 16, color: "#6b7280" }}>아직 좋아요한 행사가 없어요.</div>
       ) : (
         <div
           style={{

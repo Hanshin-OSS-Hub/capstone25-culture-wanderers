@@ -26,6 +26,8 @@ import MyReviews from "./pages/MyPage/MyReviews";
 import ReviewWrite from "./pages/MyPage/ReviewWrite";
 import ReviewEdit from "./pages/MyPage/ReviewEdit";
 import MyPartyPosts from "./pages/MyPage/MyPartyPosts";
+import MyQuestions from "./pages/MyPage/MyQuestions";
+import VisitedFestivals from "./pages/MyPage/VisitedFestivals";
 
 import RequireAuth from "./auth/RequireAuth";
 
@@ -75,6 +77,8 @@ export default function App() {
           <Route path="reviews/new" element={<ReviewWrite />} />
           <Route path="reviews/:id/edit" element={<ReviewEdit />} />
           <Route path="posts" element={<MyPartyPosts />} />
+          <Route path="questions" element={<MyQuestions />} />
+          <Route path="visited" element={<VisitedFestivals />} />
         </Route>
       </Routes>
     </Layout>

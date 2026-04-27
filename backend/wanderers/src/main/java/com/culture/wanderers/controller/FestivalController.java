@@ -1,6 +1,7 @@
 package com.culture.wanderers.controller;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.data.jpa.domain.Specification;
@@ -17,8 +18,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.culture.wanderers.dto.FestivalSummaryDto;
 import com.culture.wanderers.entity.Festival;
 import com.culture.wanderers.repository.FestivalRepository;
+import com.culture.wanderers.service.FestivalInsightService;
 
 import jakarta.persistence.criteria.Predicate;
 
@@ -27,18 +30,21 @@ import jakarta.persistence.criteria.Predicate;
 public class FestivalController {
 
     private final FestivalRepository festivalRepository;
+    private final FestivalInsightService festivalInsightService;
 
-    public FestivalController(FestivalRepository festivalRepository) {
+    public FestivalController(FestivalRepository festivalRepository, FestivalInsightService festivalInsightService) {
         this.festivalRepository = festivalRepository;
+        this.festivalInsightService = festivalInsightService;
     }
 
     // 4/27 검색어, 지역, 카테고리, 날짜 조건을 함께 적용하는 축제 검색
     @GetMapping("/api/festivals")
-    public List<Festival> getFestivals(
+    public List<FestivalSummaryDto> getFestivals(
             @RequestParam(value = "q", required = false) String q,
             @RequestParam(value = "region", required = false) String region,
             @RequestParam(value = "category", required = false) String category,
-            @RequestParam(value = "date", required = false) String date
+            @RequestParam(value = "date", required = false) String date,
+            @RequestParam(value = "status", required = false, defaultValue = "ongoing") String status
     ) {
         Specification<Festival> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -47,7 +53,12 @@ public class FestivalController {
             String today = java.time.LocalDate.now()
                     .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"));
 
-            predicates.add(cb.greaterThanOrEqualTo(root.get("endDate"), today));
+            String normalizedStatus = status == null ? "ongoing" : status.trim().toLowerCase();
+            if ("past".equals(normalizedStatus)) {
+                predicates.add(cb.lessThan(root.get("endDate"), today));
+            } else {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("endDate"), today));
+            }
 
             if (region != null && !region.isBlank() && !"전체".equals(region)) {
                 String regionKeyword = normalizeRegionKeyword(region);
@@ -86,7 +97,48 @@ public class FestivalController {
                     : cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        return festivalRepository.findAll(spec);
+        return festivalInsightService.summarize(festivalRepository.findAll(spec));
+    }
+
+    @GetMapping("/api/festivals/summaries")
+    public List<FestivalSummaryDto> getFestivalSummaries(@RequestParam(value = "ids", required = false) List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+
+        return festivalInsightService.summarizeByIds(ids);
+    }
+
+    @GetMapping("/api/festivals/popular")
+    public List<FestivalSummaryDto> getPopularFestivals(@RequestParam(value = "limit", required = false, defaultValue = "5") int limit) {
+        return festivalInsightService.getPopularFestivals(limit);
+    }
+
+    @GetMapping("/api/festivals/link-candidates")
+    public List<FestivalSummaryDto> getFestivalLinkCandidates(
+            @RequestParam(value = "query") String query,
+            @RequestParam(value = "region", required = false) String region
+    ) {
+        String normalizedQuery = normalizeLooseText(query);
+        if (normalizedQuery.isBlank()) {
+            return List.of();
+        }
+
+        String normalizedRegion = normalizeLooseText(region);
+
+        List<Festival> candidates = festivalRepository.findAll().stream()
+                .filter(festival -> {
+                    String festivalTitle = normalizeLooseText(festival.getTitle());
+                    if (festivalTitle.isBlank()) {
+                        return false;
+                    }
+                    return hasLooseTitleMatch(festivalTitle, normalizedQuery);
+                })
+                .sorted(Comparator.comparingInt((Festival festival) -> linkCandidateScore(festival, normalizedQuery, normalizedRegion)).reversed())
+                .limit(10)
+                .toList();
+
+        return festivalInsightService.summarize(candidates);
     }
 
     // 4/27 경기도/경기처럼 입력해도 검색되도록 지역명 보정
@@ -114,6 +166,79 @@ public class FestivalController {
         }
 
         return value;
+    }
+
+    private String normalizeLooseText(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        return value
+                .toLowerCase()
+                .replaceAll("\\s+", "")
+                .replaceAll("[^0-9a-z가-힣]", "");
+    }
+
+    private int linkCandidateScore(Festival festival, String normalizedQuery, String normalizedRegion) {
+        String festivalTitle = normalizeLooseText(festival.getTitle());
+        String festivalRegion = normalizeLooseText(festival.getRegion());
+        String festivalLocation = normalizeLooseText(festival.getLocation());
+
+        int score = 0;
+        double ratio = titleSimilarityRatio(festivalTitle, normalizedQuery);
+        if (festivalTitle.equals(normalizedQuery)) {
+            score += 200;
+        }
+        if (normalizedQuery.contains(festivalTitle)) {
+            score += 120;
+        }
+        if (festivalTitle.contains(normalizedQuery)) {
+            score += 80;
+        }
+        if (!normalizedRegion.isBlank() && (festivalRegion.contains(normalizedRegion) || festivalLocation.contains(normalizedRegion))) {
+            score += 25;
+        }
+        score += (int) Math.round(ratio * 100);
+        score += Math.min(festivalTitle.length(), 60);
+        return score;
+    }
+
+    private boolean hasLooseTitleMatch(String festivalTitle, String normalizedQuery) {
+        if (festivalTitle.isBlank() || normalizedQuery.isBlank()) {
+            return false;
+        }
+        if (festivalTitle.contains(normalizedQuery) || normalizedQuery.contains(festivalTitle)) {
+            return true;
+        }
+        return titleSimilarityRatio(festivalTitle, normalizedQuery) >= 0.5;
+    }
+
+    private double titleSimilarityRatio(String left, String right) {
+        if (left == null || right == null || left.isBlank() || right.isBlank()) {
+            return 0.0;
+        }
+        int commonLength = longestCommonSubstringLength(left, right);
+        int shorterLength = Math.min(left.length(), right.length());
+        if (shorterLength == 0) {
+            return 0.0;
+        }
+        return (double) commonLength / shorterLength;
+    }
+
+    private int longestCommonSubstringLength(String left, String right) {
+        int[][] dp = new int[left.length() + 1][right.length() + 1];
+        int max = 0;
+
+        for (int i = 1; i <= left.length(); i++) {
+            for (int j = 1; j <= right.length(); j++) {
+                if (left.charAt(i - 1) == right.charAt(j - 1)) {
+                    dp[i][j] = dp[i - 1][j - 1] + 1;
+                    max = Math.max(max, dp[i][j]);
+                }
+            }
+        }
+
+        return max;
     }
 
     // 상세

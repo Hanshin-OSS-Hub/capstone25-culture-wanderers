@@ -3,7 +3,10 @@ package com.culture.wanderers.service;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -15,355 +18,248 @@ import com.culture.wanderers.dto.GeminiExtractResponse;
 @Service
 public class GeminiValidationService {
 
-    private static final Set<String> ALLOWED_INTENTS = Set.of(
-            "recommend_festival",
-            "search_festival"
-    );
+    private static final DateTimeFormatter BASIC_DATE = DateTimeFormatter.ofPattern("yyyyMMdd");
 
-    private static final Set<String> ALLOWED_COMPANIONS = Set.of(
-            "solo", "friend", "couple", "family", "group"
-    );
+    private static final Set<String> ALLOWED_INTENTS = Set.of("recommend_festival", "search_festival");
+    private static final Set<String> ALLOWED_COMPANIONS = Set.of("solo", "friend", "couple", "family", "group");
+
+    private static final Map<String, String> REGION_ALIASES = createRegionAliases();
 
     private static final Set<String> NOISE_KEYWORDS = Set.of(
-            "에", "에서", "으로", "로", "좀", "추천", "추천해줘", "있어", "있어?",
-            "갈만한", "갈만한데", "갈", "가고", "가고싶어", "가고싶은", "놀고",
-            "놀고싶어", "놀고싶은", "놀고싶은데", "좋은", "곳", "데", "뭐", "어디",
-            "친구랑", "같이", "함께", "행사", "축제", "전시", "공연", "체험"
+            "추천", "추천해줘", "추천해줘요", "알려줘", "알려주세요", "있어", "있어?", "어디", "뭐", "좋아",
+            "가볼만한", "가볼만한데", "갈만한", "갈만한데", "놀거리", "놀곳", "놀만한곳", "볼거리",
+            "참여하는", "참여할", "관련된", "관련", "장소", "곳", "행사", "문화행사", "축제", "전시", "공연", "체험",
+            "오늘", "내일", "모레", "무료", "가고", "갈", "보러", "찾아줘", "찾아", "혹시",
+            "서울", "서울시", "서울특별시", "부산", "부산시", "부산광역시", "인천", "인천시", "인천광역시",
+            "대구", "대구시", "대구광역시", "광주", "광주시", "광주광역시", "대전", "대전시", "대전광역시",
+            "울산", "울산시", "울산광역시", "세종", "세종시", "세종특별자치시", "경기", "경기도",
+            "강원", "강원도", "강원특별자치도", "충북", "충청북도", "충남", "충청남도",
+            "전북", "전북특별자치도", "전라북도", "전남", "전라남도", "경북", "경상북도",
+            "경남", "경상남도", "제주", "제주도", "제주특별자치도"
     );
 
+    private static final Set<String> GENERIC_ACTIVITY_WORDS = Set.of(
+            "가볼만한", "가볼만한데", "갈만한", "갈만한데", "놀거리", "놀곳", "놀만한곳", "볼거리",
+            "참여하는", "참여할", "관련된", "관련", "곳", "장소"
+    );
+
+    private static final Pattern YYYYMMDD_DASH_PATTERN = Pattern.compile("(\\d{4})-(\\d{1,2})-(\\d{1,2})");
     private static final Pattern MONTH_DAY_KO_PATTERN = Pattern.compile("(\\d{1,2})\\s*월\\s*(\\d{1,2})\\s*일");
     private static final Pattern MONTH_DAY_SLASH_PATTERN = Pattern.compile("(\\d{1,2})\\s*/\\s*(\\d{1,2})");
-    private static final Pattern YYYYMMDD_DASH_PATTERN = Pattern.compile("(\\d{4})-(\\d{1,2})-(\\d{1,2})");
     private static final Pattern MONTH_DAY_DASH_PATTERN = Pattern.compile("(\\d{1,2})-(\\d{1,2})");
+    private static final Pattern TOKEN_PATTERN = Pattern.compile("[0-9A-Za-z가-힣]+");
 
     public GeminiExtractResponse validateAndNormalize(GeminiExtractResponse raw, String originalQuery) {
         GeminiExtractResponse safe = new GeminiExtractResponse();
 
-        if (raw == null) {
-            safe.setIntent("recommend_festival");
-            safe.setRegion(extractRegionFromText(originalQuery));
-            safe.setCategory(inferCategoryFromText(originalQuery));
-            safe.setCompanions(extractCompanionFromText(originalQuery));
-            safe.setDate(extractDateFromText(originalQuery));
-            safe.setKeywords(new ArrayList<>());
-            return safe;
-        }
+        safe.setIntent(normalizeIntent(raw != null ? raw.getIntent() : null));
 
-        safe.setIntent(
-                ALLOWED_INTENTS.contains(nullToEmpty(raw.getIntent()))
-                ? raw.getIntent()
-                : "recommend_festival"
-        );
-
-        String normalizedRegion = normalizeBlank(raw.getRegion());
-        if (normalizedRegion == null) {
-            normalizedRegion = extractRegionFromText(originalQuery);
-        }
-
-        String normalizedCompanions = normalizeCompanions(raw.getCompanions());
-        if (normalizedCompanions == null) {
-            normalizedCompanions = extractCompanionFromText(originalQuery);
-        }
-
-        String normalizedCategory = normalizeCategory(raw.getCategory());
-        if (normalizedCategory == null) {
-            normalizedCategory = inferCategoryFromText(originalQuery);
-        }
-
-        String normalizedDate = normalizeDate(raw.getDate());
-        if (normalizedDate == null) {
-            normalizedDate = extractDateFromText(originalQuery);
-        }
-
-        // 4/27 사용자가 날짜를 입력하지 않으면 날짜 조건을 적용하지 않음
+        String normalizedRegion = normalizeRegion(firstNonBlank(
+                raw != null ? raw.getRegion() : null,
+                extractRegionFromText(originalQuery)
+        ));
         safe.setRegion(normalizedRegion);
-        safe.setCategory(normalizedCategory);
-        safe.setCompanions(normalizedCompanions);
-        safe.setDate(normalizedDate);
-        // 4/27 무료 키워드가 있으면 무료 조건으로 처리
-        if (originalQuery != null && originalQuery.contains("무료")) {
-            safe.setPriceMax(0);
-        } else {
-            safe.setPriceMax(raw.getPriceMax() != null && raw.getPriceMax() >= 0 ? raw.getPriceMax() : null);
-        }
 
-        List<String> keywords = normalizeKeywords(
-                raw.getKeywords(),
-                originalQuery,
-                normalizedRegion,
-                normalizedCategory,
-                normalizedCompanions,
-                normalizedDate
+        String normalizedCategory = normalizeCategory(
+                firstNonBlank(raw != null ? raw.getCategory() : null, inferCategoryFromText(originalQuery)),
+                originalQuery
         );
+        safe.setCategory(normalizedCategory);
 
-        safe.setKeywords(keywords);
+        safe.setCompanions(normalizeCompanions(firstNonBlank(
+                raw != null ? raw.getCompanions() : null,
+                extractCompanionFromText(originalQuery)
+        )));
+        safe.setDate(normalizeDate(firstNonBlank(
+                raw != null ? raw.getDate() : null,
+                extractDateFromText(originalQuery)
+        )));
+        safe.setPriceMax(inferPriceMax(raw != null ? raw.getPriceMax() : null, originalQuery));
+        safe.setKeywords(normalizeKeywords(
+                raw != null ? raw.getKeywords() : null,
+                originalQuery,
+                safe.getRegion(),
+                safe.getCategory(),
+                safe.getCompanions(),
+                safe.getDate()
+        ));
 
         return safe;
     }
 
-    private String normalizeCategory(String value) {
-        String v = normalizeBlank(value);
-        if (v == null) {
+    private String normalizeIntent(String value) {
+        String normalized = normalizeBlank(value);
+        if (normalized == null) {
+            return "recommend_festival";
+        }
+        return ALLOWED_INTENTS.contains(normalized) ? normalized : "recommend_festival";
+    }
+
+    private String normalizeRegion(String value) {
+        String normalized = normalizeBlank(value);
+        if (normalized == null) {
             return null;
         }
 
-        if (v.equalsIgnoreCase("festival") || v.equals("축제")) {
+        for (Map.Entry<String, String> entry : REGION_ALIASES.entrySet()) {
+            if (normalized.contains(entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+
+        return normalized;
+    }
+
+    private String normalizeCategory(String value, String originalQuery) {
+        String normalized = normalizeBlank(value);
+        if (normalized == null) {
+            return null;
+        }
+
+        String query = normalizeBlank(originalQuery);
+        if (query != null && containsGenericActivityIntent(query) && !containsExplicitCategoryWord(query)) {
+            return null;
+        }
+
+        String lower = normalized.toLowerCase();
+        if (lower.contains("festival") || normalized.contains("축제") || normalized.contains("페스티벌")) {
             return "축제";
         }
-        if (v.equalsIgnoreCase("performance") || v.equals("공연")) {
+        if (lower.contains("performance") || normalized.contains("공연")) {
             return "공연";
         }
-        if (v.equalsIgnoreCase("exhibition") || v.equals("전시")) {
+        if (lower.contains("exhibition") || normalized.contains("전시")
+                || normalized.contains("미술관") || normalized.contains("박물관")) {
             return "전시";
         }
-        if (v.equalsIgnoreCase("experience") || v.equals("체험")) {
+        if (lower.contains("experience") || normalized.contains("체험")) {
             return "체험";
         }
-        if (v.equals("행사")) {
-            return null;
-        }
-
         return null;
     }
 
     private String inferCategoryFromText(String text) {
-        String v = normalizeBlank(text);
-        if (v == null) {
+        String normalized = normalizeBlank(text);
+        if (normalized == null) {
             return null;
         }
 
-        if (v.contains("전시")) {
+        if (normalized.contains("미술관") || normalized.contains("박물관") || normalized.contains("전시")) {
             return "전시";
         }
-        if (v.contains("공연")) {
+        if (normalized.contains("공연")) {
             return "공연";
         }
-        if (v.contains("체험")) {
+        if (normalized.contains("체험")) {
             return "체험";
         }
-        if (v.contains("축제")) {
+        if (normalized.contains("축제") || normalized.contains("페스티벌")) {
             return "축제";
         }
-
         return null;
     }
 
     private String normalizeCompanions(String value) {
-        String v = normalizeBlank(value);
-        if (v == null) {
+        String normalized = normalizeBlank(value);
+        if (normalized == null) {
             return null;
         }
 
-        String lower = v.toLowerCase();
-
-        if (lower.equals("혼자") || lower.equals("solo") || lower.equals("alone")) {
-            return "solo";
-        }
-        if (lower.equals("친구") || lower.equals("friend")) {
-            return "friend";
-        }
-        if (lower.equals("연인") || lower.equals("커플") || lower.equals("데이트") || lower.equals("couple")) {
-            return "couple";
-        }
-        if (lower.equals("가족") || lower.equals("family")) {
-            return "family";
-        }
-        if (lower.equals("단체") || lower.equals("group")) {
-            return "group";
-        }
-
+        String lower = normalized.toLowerCase();
+        if (lower.contains("solo") || lower.contains("alone") || normalized.contains("혼자")) return "solo";
+        if (lower.contains("friend") || normalized.contains("친구")) return "friend";
+        if (lower.contains("couple") || normalized.contains("커플") || normalized.contains("연인")
+                || normalized.contains("데이트")) return "couple";
+        if (lower.contains("family") || normalized.contains("가족")) return "family";
+        if (lower.contains("group") || normalized.contains("단체")) return "group";
         return ALLOWED_COMPANIONS.contains(lower) ? lower : null;
     }
 
     private String extractCompanionFromText(String text) {
-        String v = normalizeBlank(text);
-        if (v == null) {
-            return null;
-        }
-
-        if (v.contains("혼자")) {
-            return "solo";
-        }
-        if (v.contains("친구")) {
-            return "friend";
-        }
-        if (v.contains("연인") || v.contains("커플") || v.contains("데이트")) {
-            return "couple";
-        }
-        if (v.contains("가족")) {
-            return "family";
-        }
-        if (v.contains("단체")) {
-            return "group";
-        }
-
-        return null;
+        return normalizeCompanions(text);
     }
 
     private String normalizeDate(String value) {
-        String v = normalizeBlank(value);
-        if (v == null) {
+        String normalized = normalizeBlank(value);
+        if (normalized == null) {
             return null;
         }
 
-        String digits = v.replaceAll("[^0-9]", "");
-        if (digits.length() == 8) {
-            return digits;
+        if (normalized.matches("\\d{8}")) {
+            return normalized;
         }
 
-        Matcher ymdDashMatcher = YYYYMMDD_DASH_PATTERN.matcher(v);
+        Matcher ymdDashMatcher = YYYYMMDD_DASH_PATTERN.matcher(normalized);
         if (ymdDashMatcher.find()) {
-            int year = Integer.parseInt(ymdDashMatcher.group(1));
-            int month = Integer.parseInt(ymdDashMatcher.group(2));
-            int day = Integer.parseInt(ymdDashMatcher.group(3));
-            return formatDate(year, month, day);
+            return formatDate(
+                    Integer.parseInt(ymdDashMatcher.group(1)),
+                    Integer.parseInt(ymdDashMatcher.group(2)),
+                    Integer.parseInt(ymdDashMatcher.group(3))
+            );
         }
 
-        Matcher monthDayKoMatcher = MONTH_DAY_KO_PATTERN.matcher(v);
+        Matcher monthDayKoMatcher = MONTH_DAY_KO_PATTERN.matcher(normalized);
         if (monthDayKoMatcher.find()) {
-            int year = LocalDate.now().getYear();
-            int month = Integer.parseInt(monthDayKoMatcher.group(1));
-            int day = Integer.parseInt(monthDayKoMatcher.group(2));
-            return formatDate(year, month, day);
+            return formatDate(
+                    LocalDate.now().getYear(),
+                    Integer.parseInt(monthDayKoMatcher.group(1)),
+                    Integer.parseInt(monthDayKoMatcher.group(2))
+            );
         }
 
-        Matcher monthDaySlashMatcher = MONTH_DAY_SLASH_PATTERN.matcher(v);
+        Matcher monthDaySlashMatcher = MONTH_DAY_SLASH_PATTERN.matcher(normalized);
         if (monthDaySlashMatcher.find()) {
-            int year = LocalDate.now().getYear();
-            int month = Integer.parseInt(monthDaySlashMatcher.group(1));
-            int day = Integer.parseInt(monthDaySlashMatcher.group(2));
-            return formatDate(year, month, day);
+            return formatDate(
+                    LocalDate.now().getYear(),
+                    Integer.parseInt(monthDaySlashMatcher.group(1)),
+                    Integer.parseInt(monthDaySlashMatcher.group(2))
+            );
         }
 
-        Matcher monthDayDashMatcher = MONTH_DAY_DASH_PATTERN.matcher(v);
+        Matcher monthDayDashMatcher = MONTH_DAY_DASH_PATTERN.matcher(normalized);
         if (monthDayDashMatcher.find()) {
-            int year = LocalDate.now().getYear();
-            int month = Integer.parseInt(monthDayDashMatcher.group(1));
-            int day = Integer.parseInt(monthDayDashMatcher.group(2));
-            return formatDate(year, month, day);
-        }
-
-        if (digits.length() == 3 || digits.length() == 4) {
-            int year = LocalDate.now().getYear();
-            int month;
-            int day;
-
-            if (digits.length() == 3) {
-                month = Integer.parseInt(digits.substring(0, 1));
-                day = Integer.parseInt(digits.substring(1));
-            } else {
-                month = Integer.parseInt(digits.substring(0, 2));
-                day = Integer.parseInt(digits.substring(2));
-            }
-
-            return formatDate(year, month, day);
+            return formatDate(
+                    LocalDate.now().getYear(),
+                    Integer.parseInt(monthDayDashMatcher.group(1)),
+                    Integer.parseInt(monthDayDashMatcher.group(2))
+            );
         }
 
         return null;
     }
 
     private String extractDateFromText(String text) {
-        String v = normalizeBlank(text);
-        if (v == null) {
+        String normalized = normalizeBlank(text);
+        if (normalized == null) {
             return null;
         }
 
-        // 4/27 오늘/내일/모레 자연어 날짜 처리
-        if (v.contains("오늘")) {
-            return LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        if (normalized.contains("오늘")) return LocalDate.now().format(BASIC_DATE);
+        if (normalized.contains("내일")) return LocalDate.now().plusDays(1).format(BASIC_DATE);
+        if (normalized.contains("모레")) return LocalDate.now().plusDays(2).format(BASIC_DATE);
+        return normalizeDate(normalized);
+    }
+
+    private String extractRegionFromText(String text) {
+        String normalized = normalizeBlank(text);
+        if (normalized == null) {
+            return null;
         }
 
-        if (v.contains("내일")) {
-            return LocalDate.now().plusDays(1).format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        }
-
-        if (v.contains("모레")) {
-            return LocalDate.now().plusDays(2).format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        }
-
-        Matcher monthDayKoMatcher = MONTH_DAY_KO_PATTERN.matcher(v);
-        if (monthDayKoMatcher.find()) {
-            int year = LocalDate.now().getYear();
-            int month = Integer.parseInt(monthDayKoMatcher.group(1));
-            int day = Integer.parseInt(monthDayKoMatcher.group(2));
-            return formatDate(year, month, day);
-        }
-
-        Matcher monthDaySlashMatcher = MONTH_DAY_SLASH_PATTERN.matcher(v);
-        if (monthDaySlashMatcher.find()) {
-            int year = LocalDate.now().getYear();
-            int month = Integer.parseInt(monthDaySlashMatcher.group(1));
-            int day = Integer.parseInt(monthDaySlashMatcher.group(2));
-            return formatDate(year, month, day);
-        }
-
-        Matcher monthDayDashMatcher = MONTH_DAY_DASH_PATTERN.matcher(v);
-        if (monthDayDashMatcher.find()) {
-            int year = LocalDate.now().getYear();
-            int month = Integer.parseInt(monthDayDashMatcher.group(1));
-            int day = Integer.parseInt(monthDayDashMatcher.group(2));
-            return formatDate(year, month, day);
+        for (Map.Entry<String, String> entry : REGION_ALIASES.entrySet()) {
+            if (normalized.contains(entry.getKey())) {
+                return entry.getValue();
+            }
         }
 
         return null;
     }
 
-    private String extractRegionFromText(String text) {
-        String v = normalizeBlank(text);
-        if (v == null) {
-            return null;
+    private Integer inferPriceMax(Integer rawPriceMax, String text) {
+        if (text != null && text.contains("무료")) {
+            return 0;
         }
-
-        if (v.contains("서울")) {
-            return "서울";
-        }
-        if (v.contains("부산")) {
-            return "부산";
-        }
-        if (v.contains("인천")) {
-            return "인천";
-        }
-        if (v.contains("대구")) {
-            return "대구";
-        }
-        if (v.contains("광주")) {
-            return "광주";
-        }
-        if (v.contains("대전")) {
-            return "대전";
-        }
-        if (v.contains("울산")) {
-            return "울산";
-        }
-        if (v.contains("경기")) {
-            return "경기";
-        }
-        if (v.contains("강원")) {
-            return "강원";
-        }
-        if (v.contains("충북")) {
-            return "충북";
-        }
-        if (v.contains("충남")) {
-            return "충남";
-        }
-        if (v.contains("전북")) {
-            return "전북";
-        }
-        if (v.contains("전남")) {
-            return "전남";
-        }
-        if (v.contains("경북")) {
-            return "경북";
-        }
-        if (v.contains("경남")) {
-            return "경남";
-        }
-        if (v.contains("제주")) {
-            return "제주";
-        }
-
-        return null;
+        return rawPriceMax != null && rawPriceMax >= 0 ? rawPriceMax : null;
     }
 
     private List<String> normalizeKeywords(
@@ -374,119 +270,79 @@ public class GeminiValidationService {
             String companions,
             String date
     ) {
-        List<String> source = new ArrayList<>();
-
+        List<String> sources = new ArrayList<>();
         if (rawKeywords != null) {
-            source.addAll(rawKeywords);
+            sources.addAll(rawKeywords);
         }
-
-        // 4/27 Gemini가 핵심 키워드를 빠뜨려도 원문에서 다시 키워드 추출
         if (originalQuery != null && !originalQuery.isBlank()) {
-            source.add(originalQuery);
+            sources.add(originalQuery);
         }
 
-        List<String> result = new ArrayList<>();
+        LinkedHashSet<String> result = new LinkedHashSet<>();
 
-        for (String keyword : source) {
-            String normalized = normalizeBlank(keyword);
-            if (normalized == null) {
+        for (String source : sources) {
+            String cleaned = normalizeBlank(source);
+            if (cleaned == null) {
                 continue;
             }
 
-            String cleaned = normalized
+            cleaned = cleaned
+                    .replaceAll("\\d{4}-\\d{1,2}-\\d{1,2}", " ")
                     .replaceAll("\\d{1,2}\\s*월\\s*\\d{1,2}\\s*일", " ")
                     .replaceAll("\\d{1,2}\\s*/\\s*\\d{1,2}", " ")
                     .replaceAll("\\d{1,2}-\\d{1,2}", " ")
-                    .replaceAll("\\d{4}-\\d{1,2}-\\d{1,2}", " ")
-                    .replace("축제", " ")
-                    .replace("행사", " ")
-                    .replace("전시", " ")
-                    .replace("공연", " ")
-                    .replace("체험", " ")
-                    .replace("친구", " ")
-                    .replace("친구랑", " ")
-                    .replace("혼자", " ")
-                    .replace("가족", " ")
-                    .replace("연인", " ")
-                    .replace("커플", " ")
-                    .replace("데이트", " ")
                     .replace("무료", " ")
                     .replace("오늘", " ")
                     .replace("내일", " ")
-                    .replace("모레", " ")
-                    .replace("추천해줘", " ")
-                    .replace("추천", " ")
-                    .replace("갈만한데", " ")
-                    .replace("갈만한", " ")
-                    .replace("갈 곳", " ")
-                    .replace("갈곳", " ")
-                    .replace("놀고싶은데", " ")
-                    .replace("놀고 싶은데", " ")
-                    .replace("놀고싶어", " ")
-                    .replace("놀고 싶어", " ")
-                    .replace("같이", " ")
-                    .replace("함께", " ")
-                    .replace("가고싶어", " ")
-                    .replace("가고 싶어", " ")
-                    .replace("있어?", " ")
-                    .replace("있어", " ")
-                    .replace("어디", " ")
-                    .replace("뭐", " ")
-                    .trim();
+                    .replace("모레", " ");
 
-            if (region != null) {
-                cleaned = cleaned.replace(region, " ").trim();
+            if (region != null) cleaned = cleaned.replace(region, " ");
+            if (category != null) cleaned = cleaned.replace(category, " ");
+            if (date != null) cleaned = cleaned.replace(date, " ");
+            if (companions != null) cleaned = cleaned.replace(companions, " ");
+
+            for (String alias : REGION_ALIASES.keySet()) {
+                cleaned = cleaned.replace(alias, " ");
             }
 
-            if (category != null) {
-                cleaned = cleaned.replace(category, " ").trim();
-            }
-
-            if (date != null) {
-                cleaned = cleaned.replace(date, " ").trim();
-            }
-
-            if (companions != null) {
-                cleaned = cleaned.replace(companions, " ").trim();
-            }
-
-            cleaned = cleaned.replaceAll("\\s+", " ").trim();
-
-            if (cleaned.isBlank()) {
-                continue;
-            }
-
-            String[] parts = cleaned.split(" ");
-            for (String part : parts) {
-                String token = normalizeBlank(part);
+            Matcher matcher = TOKEN_PATTERN.matcher(cleaned);
+            while (matcher.find()) {
+                String token = normalizeBlank(matcher.group());
                 if (token == null) {
                     continue;
                 }
-
-                // 4/27 한글 1글자 키워드도 검색에 사용
-                if (token.length() <= 1 && !token.matches("[가-힣]")) {
-                    continue;
-                }
-
                 if (NOISE_KEYWORDS.contains(token)) {
                     continue;
                 }
-
-                if (!result.contains(token)) {
-                    result.add(token);
-                }
+                result.add(token);
             }
         }
 
-        return result.stream()
-                .limit(10)
-                .toList();
+        return result.stream().limit(10).toList();
+    }
+
+    private boolean containsGenericActivityIntent(String query) {
+        return GENERIC_ACTIVITY_WORDS.stream().anyMatch(query::contains);
+    }
+
+    private boolean containsExplicitCategoryWord(String query) {
+        return query.contains("축제")
+                || query.contains("페스티벌")
+                || query.contains("전시")
+                || query.contains("미술관")
+                || query.contains("박물관")
+                || query.contains("공연")
+                || query.contains("체험")
+                || query.contains("음식")
+                || query.contains("먹거리")
+                || query.contains("도자기")
+                || query.contains("드론")
+                || query.contains("꽃");
     }
 
     private String formatDate(int year, int month, int day) {
         try {
-            LocalDate date = LocalDate.of(year, month, day);
-            return String.format("%04d%02d%02d", date.getYear(), date.getMonthValue(), date.getDayOfMonth());
+            return LocalDate.of(year, month, day).format(BASIC_DATE);
         } catch (Exception e) {
             return null;
         }
@@ -497,10 +353,60 @@ public class GeminiValidationService {
             return null;
         }
         String trimmed = value.trim();
-        return trimmed.isEmpty() || trimmed.equalsIgnoreCase("null") ? null : trimmed;
+        return trimmed.isEmpty() || "null".equalsIgnoreCase(trimmed) ? null : trimmed;
     }
 
-    private String nullToEmpty(String value) {
-        return value == null ? "" : value.trim();
+    private String firstNonBlank(String first, String second) {
+        return normalizeBlank(first) != null ? first : second;
+    }
+
+    private static Map<String, String> createRegionAliases() {
+        Map<String, String> aliases = new LinkedHashMap<>();
+        aliases.put("서울특별시", "서울");
+        aliases.put("서울시", "서울");
+        aliases.put("서울", "서울");
+        aliases.put("부산광역시", "부산");
+        aliases.put("부산시", "부산");
+        aliases.put("부산", "부산");
+        aliases.put("인천광역시", "인천");
+        aliases.put("인천시", "인천");
+        aliases.put("인천", "인천");
+        aliases.put("대구광역시", "대구");
+        aliases.put("대구시", "대구");
+        aliases.put("대구", "대구");
+        aliases.put("광주광역시", "광주");
+        aliases.put("광주시", "광주");
+        aliases.put("광주", "광주");
+        aliases.put("대전광역시", "대전");
+        aliases.put("대전시", "대전");
+        aliases.put("대전", "대전");
+        aliases.put("울산광역시", "울산");
+        aliases.put("울산시", "울산");
+        aliases.put("울산", "울산");
+        aliases.put("세종특별자치시", "세종");
+        aliases.put("세종시", "세종");
+        aliases.put("세종", "세종");
+        aliases.put("경기도", "경기");
+        aliases.put("경기", "경기");
+        aliases.put("강원특별자치도", "강원");
+        aliases.put("강원도", "강원");
+        aliases.put("강원", "강원");
+        aliases.put("충청북도", "충북");
+        aliases.put("충북", "충북");
+        aliases.put("충청남도", "충남");
+        aliases.put("충남", "충남");
+        aliases.put("전북특별자치도", "전북");
+        aliases.put("전라북도", "전북");
+        aliases.put("전북", "전북");
+        aliases.put("전라남도", "전남");
+        aliases.put("전남", "전남");
+        aliases.put("경상북도", "경북");
+        aliases.put("경북", "경북");
+        aliases.put("경상남도", "경남");
+        aliases.put("경남", "경남");
+        aliases.put("제주특별자치도", "제주");
+        aliases.put("제주도", "제주");
+        aliases.put("제주", "제주");
+        return aliases;
     }
 }
