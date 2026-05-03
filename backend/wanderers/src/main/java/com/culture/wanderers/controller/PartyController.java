@@ -359,17 +359,34 @@ public class PartyController {
         Map<Long, Party> reviewTargets = new LinkedHashMap<>();
 
         partyRepository.findByAuthorEmail(email).stream()
-                .filter(party -> "COMPLETED".equalsIgnoreCase(party.getStatus()))
+                .filter(this::isPartyReviewOpen)
                 .forEach(party -> reviewTargets.put(party.getId(), party));
 
         partyMemberRepository.findByUserEmailAndStatus(email, "APPROVED").stream()
                 .map(PartyMember::getParty)
-                .filter(party -> party != null && "COMPLETED".equalsIgnoreCase(party.getStatus()))
+                .filter(this::isPartyReviewOpen)
                 .forEach(party -> reviewTargets.putIfAbsent(party.getId(), party));
 
         List<Party> parties = new ArrayList<>(reviewTargets.values());
         parties.forEach(this::attachPartyMetadata);
         return parties;
+    }
+
+    private boolean isPartyReviewOpen(Party party) {
+        if (party == null) {
+            return false;
+        }
+
+        if ("COMPLETED".equalsIgnoreCase(party.getStatus())) {
+            return true;
+        }
+
+        if (party.getMeetingTime() == null || party.getMeetingTime().isAfter(LocalDateTime.now())) {
+            return false;
+        }
+
+        return partyMemberRepository.findByParty_IdOrderByCreatedAtAsc(party.getId()).stream()
+                .anyMatch(member -> "APPROVED".equalsIgnoreCase(member.getStatus()));
     }
 
     private String extractEmail(String authHeader) {

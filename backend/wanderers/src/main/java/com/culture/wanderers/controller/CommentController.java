@@ -38,7 +38,8 @@ public class CommentController {
     @GetMapping("/api/comments")
     public List<Comment> getComments(
             @RequestParam("targetType") String targetType,
-            @RequestParam("targetId") Long targetId
+            @RequestParam("targetId") Long targetId,
+            @RequestHeader(name = "Authorization", required = false) String authHeader
     ) {
         if (targetType == null || targetType.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "targetType is required.");
@@ -51,7 +52,8 @@ public class CommentController {
                 targetType.toUpperCase(),
                 targetId
         );
-        comments.forEach(this::attachUserNickname);
+        String viewerEmail = extractOptionalEmail(authHeader);
+        comments.forEach(comment -> applyCommentVisibility(comment, viewerEmail));
         return comments;
     }
 
@@ -86,7 +88,7 @@ public class CommentController {
         }
 
         Comment saved = commentRepository.save(comment);
-        attachUserNickname(saved);
+        applyCommentVisibility(saved, email);
         return saved;
     }
 
@@ -111,7 +113,7 @@ public class CommentController {
 
         comment.setContent(detail.getContent().trim());
         Comment saved = commentRepository.save(comment);
-        attachUserNickname(saved);
+        applyCommentVisibility(saved, email);
         return saved;
     }
 
@@ -145,6 +147,18 @@ public class CommentController {
         }
     }
 
+    private String extractOptionalEmail(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return null;
+        }
+
+        try {
+            return jwtUtil.extractEmail(authHeader.substring(7));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private void attachUserNickname(Comment comment) {
         if (comment == null || comment.getUserEmail() == null || comment.getUserEmail().isBlank()) {
             return;
@@ -160,5 +174,26 @@ public class CommentController {
                 .orElse(fallback);
 
         comment.setUserNickname(nickname);
+    }
+
+    private void applyCommentVisibility(Comment comment, String viewerEmail) {
+        if (comment == null) {
+            return;
+        }
+
+        if (comment.getIsAnonymous() != null && comment.getIsAnonymous()) {
+            comment.setUserNickname("익명");
+            boolean mine = viewerEmail != null
+                    && comment.getUserEmail() != null
+                    && viewerEmail.equalsIgnoreCase(comment.getUserEmail());
+            comment.setEditableByViewer(mine);
+            comment.setUserEmail(null);
+            return;
+        }
+
+        comment.setEditableByViewer(viewerEmail != null
+                && comment.getUserEmail() != null
+                && viewerEmail.equalsIgnoreCase(comment.getUserEmail()));
+        attachUserNickname(comment);
     }
 }
