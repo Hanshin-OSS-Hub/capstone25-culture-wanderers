@@ -43,4 +43,7 @@ public class Comment {
 
     @Transient
     private String userNickname;
+
+    @Transient
+    private Boolean editableByViewer = false;
 }
