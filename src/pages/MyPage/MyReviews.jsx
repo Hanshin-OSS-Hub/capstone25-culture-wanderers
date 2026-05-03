@@ -7,7 +7,9 @@ export default function MyReviews() {
   const navigate = useNavigate();
   const [reviews, setReviews] = useState([]);
   const [festivalList, setFestivalList] = useState([]);
+  const [partyReviewTargets, setPartyReviewTargets] = useState([]);
   const [selectedFestivalId, setSelectedFestivalId] = useState("");
+  const [selectedPartyId, setSelectedPartyId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -50,20 +52,38 @@ export default function MyReviews() {
 
         const visitedList = Array.isArray(data)
           ? data.map((item) => ({
-            id: item.festivalId,
-            title: item.festivalTitle,
-          }))
+              id: item.festivalId,
+              title: item.festivalTitle,
+            }))
           : [];
 
         setFestivalList(visitedList);
-
-        setFestivalList(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("축제 목록 조회 실패:", err);
       }
     };
 
+    const fetchPartyTargets = async () => {
+      try {
+        const data = await authFetch("/api/me/party-review-targets");
+
+        const targetList = Array.isArray(data)
+          ? data.map((item) => ({
+              id: item.id,
+              title: item.title,
+              meetingTime: item.meetingTime,
+            }))
+          : [];
+
+        setPartyReviewTargets(targetList);
+      } catch (err) {
+        console.error("파티 후기 대상 조회 실패:", err);
+        setPartyReviewTargets([]);
+      }
+    };
+
     fetchFestivals();
+    fetchPartyTargets();
   }, []);
 
   const handleDelete = async (id) => {
@@ -94,41 +114,91 @@ export default function MyReviews() {
     <div className="myreviews-page">
       <div className="myreviews-header">
         <h2>내 후기</h2>
-        <select
-          className="review-target-select"
-          value={selectedFestivalId}
-          onChange={(e) => setSelectedFestivalId(e.target.value)}
-        >
-          <option value="">후기 작성할 행사 선택</option>
-          {festivalList.map((festival) => (
-            <option
-              key={festival.festivalId || festival.id}
-              value={festival.festivalId || festival.id}
+        <div style={{ display: "grid", gap: 10, width: "100%", maxWidth: 420 }}>
+          <div style={{ display: "flex", gap: 8 }}>
+            <select
+              className="review-target-select"
+              value={selectedFestivalId}
+              onChange={(e) => setSelectedFestivalId(e.target.value)}
+              style={{ flex: 1 }}
             >
-              {festival.festivalTitle || festival.title}
-            </option>
-          ))}
-        </select>
+              <option value="">축제 후기 대상 선택</option>
+              {festivalList.map((festival) => (
+                <option
+                  key={festival.festivalId || festival.id}
+                  value={festival.festivalId || festival.id}
+                >
+                  {festival.festivalTitle || festival.title}
+                </option>
+              ))}
+            </select>
 
-        <button
-          className="review-write-btn"
-          onClick={() => {
-            const selectedFestival = festivalList.find(
-              (festival) =>
-                String(festival.festivalId || festival.id) === String(selectedFestivalId)
-            );
+            <button
+              className="review-write-btn"
+              onClick={() => {
+                const selectedFestival = festivalList.find(
+                  (festival) =>
+                    String(festival.festivalId || festival.id) === String(selectedFestivalId)
+                );
 
-            navigate("/mypage/reviews/new", {
-              state: {
-                targetType: "festival",
-                targetId: selectedFestival.festivalId || selectedFestival.id,
-                targetTitle: selectedFestival.festivalTitle || selectedFestival.title,
-              },
-            });
-          }}
-        >
-          후기 작성
-        </button>
+                if (!selectedFestival) {
+                  alert("후기를 작성할 축제를 선택해주세요.");
+                  return;
+                }
+
+                navigate("/mypage/reviews/new", {
+                  state: {
+                    targetType: "festival",
+                    targetId: selectedFestival.festivalId || selectedFestival.id,
+                    targetTitle: selectedFestival.festivalTitle || selectedFestival.title,
+                  },
+                });
+              }}
+            >
+              축제 후기 작성
+            </button>
+          </div>
+
+          <div style={{ display: "flex", gap: 8 }}>
+            <select
+              className="review-target-select"
+              value={selectedPartyId}
+              onChange={(e) => setSelectedPartyId(e.target.value)}
+              style={{ flex: 1 }}
+            >
+              <option value="">완료된 파티 선택</option>
+              {partyReviewTargets.map((party) => (
+                <option key={party.id} value={party.id}>
+                  {party.title}
+                </option>
+              ))}
+            </select>
+
+            <button
+              className="review-write-btn"
+              onClick={() => {
+                const selectedParty = partyReviewTargets.find(
+                  (party) => String(party.id) === String(selectedPartyId)
+                );
+
+                if (!selectedParty) {
+                  alert("후기를 작성할 완료된 파티를 선택해주세요.");
+                  return;
+                }
+
+                navigate("/mypage/reviews/new", {
+                  state: {
+                    targetType: "party",
+                    targetId: selectedParty.id,
+                    targetTitle: selectedParty.title,
+                  },
+                });
+              }}
+            >
+              파티 후기 작성
+            </button>
+          </div>
+        </div>
       </div>
 
       {reviews.length === 0 ? (

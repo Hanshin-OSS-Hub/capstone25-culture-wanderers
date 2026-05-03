@@ -78,6 +78,13 @@ public class CommentController {
         comment.setUserEmail(email);
         comment.setCreatedAt(LocalDateTime.now());
 
+        // 익명 처리: 파티 댓글은 익명 불가
+        if ("PARTY".equalsIgnoreCase(comment.getTargetType())) {
+            comment.setIsAnonymous(false);
+        } else if (comment.getIsAnonymous() == null) {
+            comment.setIsAnonymous(false);
+        }
+
         Comment saved = commentRepository.save(comment);
         attachUserNickname(saved);
         return saved;

@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "./Community.css";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { authFetch } from "../api/authFetch";
 import axios from "axios";
 
 export default function Community() {
   const location = useLocation();
+  const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
   const tabParam = params.get("tab");
   const initialTab =
@@ -46,6 +47,8 @@ export default function Community() {
           replies: item.commentCount ?? 0,
           views: item.viewCount ?? 0,
           time: item.createdAt ? String(item.createdAt).slice(0, 10) : "",
+          userEmail: item.userEmail || null,
+          authorNickname: item.authorNickname || "익명",
         }));
 
         setQuestions(normalized);
@@ -81,6 +84,8 @@ export default function Community() {
           likes: item.likeCount ?? 0,
           comments: item.commentCount ?? 0,
           rating: item.rating ?? 0,
+          authorEmail: item.authorEmail || null,
+          authorNickname: item.authorNickname || "익명",
         }));
 
         setReviews(normalized);
@@ -111,6 +116,8 @@ export default function Community() {
           tag: item.regionTag || "일반",
           views: item.viewCount ?? 0,
           time: item.createdAt ? String(item.createdAt).slice(0, 10) : "",
+          userEmail: item.userEmail || null,
+          authorNickname: item.authorNickname || "익명",
         }));
 
         setFreePosts(normalized);
@@ -236,6 +243,20 @@ export default function Community() {
                   <span className="item-tag subtle">{q.tag}</span>
                 </div>
                 <div className="item-meta">
+                  <span
+                    className="item-author"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (q.userEmail && q.userEmail !== "익명") {
+                        navigate(`/profile/${q.userEmail}`);
+                      }
+                    }}
+                    style={{
+                      cursor: q.userEmail && q.userEmail !== "익명" ? "pointer" : "default",
+                    }}
+                  >
+                    {q.authorNickname}
+                  </span>
                   <span>💬 {q.replies}</span>
                   <span>👁 {q.views}</span>
                   <span>{q.time}</span>
@@ -262,6 +283,20 @@ export default function Community() {
                   <span className="item-tag subtle">리뷰</span>
                 </div>
                 <div className="item-meta">
+                  <span
+                    className="item-author"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (r.authorEmail && r.authorEmail !== "익명") {
+                        navigate(`/profile/${r.authorEmail}`);
+                      }
+                    }}
+                    style={{
+                      cursor: r.authorEmail && r.authorEmail !== "익명" ? "pointer" : "default",
+                    }}
+                  >
+                    {r.authorNickname}
+                  </span>
                   <span>★ {r.rating}</span>
                   <span>❤️ {r.likes}</span>
                   <span>💬 {r.comments}</span>
@@ -288,6 +323,20 @@ export default function Community() {
                   <span className="item-tag subtle">{p.tag}</span>
                 </div>
                 <div className="item-meta">
+                  <span
+                    className="item-author"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (p.userEmail && p.userEmail !== "익명") {
+                        navigate(`/profile/${p.userEmail}`);
+                      }
+                    }}
+                    style={{
+                      cursor: p.userEmail && p.userEmail !== "익명" ? "pointer" : "default",
+                    }}
+                  >
+                    {p.authorNickname}
+                  </span>
                   <span>👁 {p.views}</span>
                   <span>{p.time}</span>
                 </div>

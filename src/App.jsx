@@ -28,6 +28,7 @@ import ReviewEdit from "./pages/MyPage/ReviewEdit";
 import MyPartyPosts from "./pages/MyPage/MyPartyPosts";
 import MyQuestions from "./pages/MyPage/MyQuestions";
 import VisitedFestivals from "./pages/MyPage/VisitedFestivals";
+import UserProfile from "./pages/UserProfile";
 
 import RequireAuth from "./auth/RequireAuth";
 
@@ -52,6 +53,8 @@ export default function App() {
         <Route path="/community" element={<Community />} />
         <Route path="/community/write/:type" element={<CommunityWrite />} />
         <Route path="/community/:type/:id" element={<CommunityDetail />} />
+
+        <Route path="/profile/:userEmail" element={<UserProfile />} />
 
         <Route path="/benefits" element={<Benefits />} />
 

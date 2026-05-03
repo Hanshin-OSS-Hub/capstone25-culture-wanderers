@@ -66,6 +66,7 @@ export default function PartyList() {
   const location = useLocation();
 
   const [parties, setParties] = useState([]);
+  const [statusFilter, setStatusFilter] = useState("전체");
   const [regionFilter, setRegionFilter] = useState("전체");
   const [sortType, setSortType] = useState("최신순");
   const [loading, setLoading] = useState(true);
@@ -90,6 +91,12 @@ export default function PartyList() {
   const filteredParties = useMemo(() => {
     let next = [...parties];
 
+    if (statusFilter === "모집 중") {
+      next = next.filter((p) => !p.isClosed);
+    } else if (statusFilter === "마감") {
+      next = next.filter((p) => p.isClosed);
+    }
+
     if (regionFilter !== "전체") {
       next = next.filter((party) => String(party.location || "").includes(regionFilter));
     }
@@ -109,7 +116,7 @@ export default function PartyList() {
     }
 
     return next;
-  }, [parties, regionFilter, sortType]);
+  }, [parties, regionFilter, sortType, statusFilter]);
 
   return (
     <div className="party-page">
@@ -137,13 +144,25 @@ export default function PartyList() {
         <div className="party-filter-group">
           <span className="party-filter-label">상태</span>
           <div className="party-filter-chips">
-            <button type="button" className="chip chip-active">
+            <button
+              type="button"
+              className={`chip ${statusFilter === "전체" ? "chip-active" : ""}`}
+              onClick={() => setStatusFilter("전체")}
+            >
               전체
             </button>
-            <button type="button" className="chip">
+            <button
+              type="button"
+              className={`chip ${statusFilter === "모집 중" ? "chip-active" : ""}`}
+              onClick={() => setStatusFilter("모집 중")}
+            >
               모집 중
             </button>
-            <button type="button" className="chip">
+            <button
+              type="button"
+              className={`chip ${statusFilter === "마감" ? "chip-active" : ""}`}
+              onClick={() => setStatusFilter("마감")}
+            >
               마감
             </button>
           </div>

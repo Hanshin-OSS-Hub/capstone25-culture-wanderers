@@ -101,6 +101,8 @@ export default function PartyDetail() {
   const [festivalCandidates, setFestivalCandidates] = useState([]);
   const [loadingFestivalCandidates, setLoadingFestivalCandidates] = useState(false);
   const [linkingFestivalId, setLinkingFestivalId] = useState(null);
+  const [myApprovedParties, setMyApprovedParties] = useState([]);
+  const [completingParty, setCompletingParty] = useState(false);
 
   const currentUserEmail = getStoredEmail();
   const currentUserName = getDisplayName({
@@ -176,12 +178,27 @@ export default function PartyDetail() {
     }
   };
 
+  const loadMyApprovedParties = async () => {
+    if (!currentUserEmail) {
+      setMyApprovedParties([]);
+      return;
+    }
+
+    try {
+      const data = await authFetch("/api/me/parties");
+      setMyApprovedParties(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("내 참여 파티 로딩 실패:", error);
+      setMyApprovedParties([]);
+    }
+  };
+
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
         const loadedParty = await loadParty();
-        await Promise.all([loadComments(), loadApplications(loadedParty)]);
+        await Promise.all([loadComments(), loadApplications(loadedParty), loadMyApprovedParties()]);
       } catch (error) {
         console.error("파티 상세 로딩 실패:", error);
         setParty(null);
@@ -204,6 +221,34 @@ export default function PartyDetail() {
     if (!party?.hostEmail || !currentUserEmail) return false;
     return String(party.hostEmail).toLowerCase() === String(currentUserEmail).toLowerCase();
   }, [party, currentUserEmail]);
+
+  const isApprovedParticipant = useMemo(() => {
+    if (!party?.id) return false;
+    return myApprovedParties.some((item) => String(item.id) === String(party.id));
+  }, [myApprovedParties, party]);
+
+  const canWritePartyReview = useMemo(() => {
+    if (!party) return false;
+
+    const alreadyCompleted = party?.rawStatus === "COMPLETED";
+
+    const meetingPassedAndHasMembers = (() => {
+      if (!party.meetingTime) return false;
+      const meetingTime = new Date(party.meetingTime).getTime();
+      if (Number.isNaN(meetingTime)) return false;
+      return Date.now() >= meetingTime && (party.currentCount || 0) > 0;
+    })();
+
+    return (alreadyCompleted || meetingPassedAndHasMembers) && (isAuthor || isApprovedParticipant);
+  }, [isAuthor, isApprovedParticipant, party]);
+
+  const canCompleteParty = useMemo(() => {
+    if (!isAuthor || !party || party.rawStatus === "COMPLETED") return false;
+    if (!party.meetingTime) return false;
+
+    const meetingTime = new Date(party.meetingTime).getTime();
+    return !Number.isNaN(meetingTime) && Date.now() >= meetingTime;
+  }, [isAuthor, party]);
 
   const pendingApplications = applications.filter((item) => item.status === "PENDING");
 
@@ -321,6 +366,7 @@ export default function PartyDetail() {
           targetType: "PARTY",
           targetId: Number(id),
           content,
+          isAnonymous: false,
         }),
       });
 
@@ -384,6 +430,26 @@ export default function PartyDetail() {
 
   const handleEditParty = () => {
     navigate("/mypage/posts", { state: { editPartyId: Number(id) } });
+  };
+
+  const handleCompleteParty = async () => {
+    if (!party || !canCompleteParty) return;
+
+    if (!window.confirm("이 파티를 실제로 완료 처리할까요?")) return;
+
+    try {
+      setCompletingParty(true);
+      await authFetch(`/api/party-posts/${id}/complete`, {
+        method: "PATCH",
+      });
+      alert("파티를 완료 처리했어요. 이제 참여자들이 후기를 남길 수 있어요.");
+      await Promise.all([loadParty(), loadMyApprovedParties()]);
+    } catch (error) {
+      console.error("파티 완료 처리 실패:", error);
+      alert("파티 완료 처리에 실패했어요.");
+    } finally {
+      setCompletingParty(false);
+    }
   };
 
   const openFestivalLinkModal = async () => {
@@ -593,6 +659,16 @@ export default function PartyDetail() {
           <div className="party-detail-actions">
             {isAuthor ? (
               <div className="party-owner-actions">
+                {canCompleteParty ? (
+                  <button
+                    type="button"
+                    className="party-detail-apply-btn secondary"
+                    onClick={handleCompleteParty}
+                    disabled={completingParty}
+                  >
+                    {completingParty ? "완료 처리 중..." : "파티 완료 처리"}
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className="party-detail-apply-btn secondary"
@@ -618,6 +694,24 @@ export default function PartyDetail() {
                 {joining ? "신청 중..." : party.isClosed ? "모집 마감" : "참여 신청하기"}
               </button>
             )}
+
+            {canWritePartyReview ? (
+              <button
+                type="button"
+                className="party-detail-apply-btn secondary"
+                onClick={() =>
+                  navigate("/mypage/reviews/new", {
+                    state: {
+                      targetType: "party",
+                      targetId: party.id,
+                      targetTitle: party.title,
+                    },
+                  })
+                }
+              >
+                파티 후기 작성하기
+              </button>
+            ) : null}
           </div>
         </div>
       </div>

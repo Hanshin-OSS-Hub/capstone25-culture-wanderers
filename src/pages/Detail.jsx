@@ -131,9 +131,11 @@ export default function Detail() {
 
   useEffect(() => {
     const fetchDetail = async () => {
+      let festivalData = null;
+
       try {
         const festivalRes = await axios.get(`http://localhost:8080/api/festivals/${id}`);
-        const festivalData = festivalRes.data;
+        festivalData = festivalRes.data;
 
         setFestival(festivalData);
         setVisitDate(getDefaultVisitDate(festivalData));
@@ -189,6 +191,66 @@ export default function Detail() {
         } catch (error) {
           console.error('파티글 로딩 실패:', error);
           setPartyPosts([]);
+        }
+
+        try {
+          // 공용 리뷰 목록을 받아와서 festival id 기준으로 우선 필터링합니다.
+          const reviewRes = await axios.get('http://localhost:8080/api/reviews');
+          const reviewData = reviewRes.data;
+
+          const reviewList = Array.isArray(reviewData)
+            ? reviewData
+            : Array.isArray(reviewData?.data)
+              ? reviewData.data
+              : [];
+
+          const normalize = (str) =>
+            String(str || '')
+              .toLowerCase()
+              .replace(/[^0-9a-z가-힣]/g, '')
+              .replace(/\s+/g, '');
+
+          const festivalKey = normalize(festivalData?.title || festivalData?.targetTitle || '');
+
+          const normalizedReviewList = reviewList
+            .filter((review) => {
+              const targetType = String(review.targetType || '').trim().toLowerCase();
+              const targetId = review.targetId != null ? Number(review.targetId) : null;
+
+              // 1) 명시적인 targetId가 있으면 우선 매칭
+              if (targetType === 'festival' && targetId != null && Number(festivalData?.id) === targetId) {
+                return true;
+              }
+
+              // 2) targetId가 없거나 불일치할 경우 제목/내용 기반 보조 매칭
+              if (festivalKey) {
+                const tTitle = normalize(review.targetTitle);
+                const rTitle = normalize(review.title);
+                const rContent = normalize(review.content);
+
+                return (
+                  (tTitle && tTitle.includes(festivalKey)) ||
+                  (rTitle && rTitle.includes(festivalKey)) ||
+                  (rContent && rContent.includes(festivalKey))
+                );
+              }
+
+              return false;
+            })
+            .map((review) => ({
+              ...review,
+              targetType: review.targetType || '',
+              targetTitle: review.targetTitle || '',
+              title: review.title || '',
+              content: review.content || '',
+              rating: review.rating ?? 0,
+              createdAt: review.createdAt || '',
+            }));
+
+          setReviews(normalizedReviewList);
+        } catch (error) {
+          console.error('리뷰 로딩 실패:', error);
+          setReviews([]);
         }
       } catch (error) {
         console.error('축제 상세 로딩 실패:', error);

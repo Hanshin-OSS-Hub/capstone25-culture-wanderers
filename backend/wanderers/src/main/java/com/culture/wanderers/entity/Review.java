@@ -70,6 +70,12 @@ public class Review {
 
     private LocalDate createdAt;
 
+    @Column(name = "is_anonymous")
+    private Boolean isAnonymous = false;
+
+    @Transient
+    private String authorNickname;
+
     @Transient
     private Long commentCount;
 }

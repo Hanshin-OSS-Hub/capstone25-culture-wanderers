@@ -60,6 +60,12 @@ public class Post {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "is_anonymous")
+    private Boolean isAnonymous = false;
+
+    @Transient
+    private String authorNickname;
+
     @Transient
     private Long commentCount;
 }

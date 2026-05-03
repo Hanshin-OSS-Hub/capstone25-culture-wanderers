@@ -12,13 +12,16 @@ export default function CommunityWrite() {
   const [questionTitle, setQuestionTitle] = useState("");
   const [questionContent, setQuestionContent] = useState("");
   const [questionRegion, setQuestionRegion] = useState("서울");
+  const [questionAnonymous, setQuestionAnonymous] = useState(false);
   const [reviewTargetTitle, setReviewTargetTitle] = useState("");
   const [reviewCategory, setReviewCategory] = useState("축제");
   const [reviewTitle, setReviewTitle] = useState("");
   const [reviewContent, setReviewContent] = useState("");
+  const [reviewAnonymous, setReviewAnonymous] = useState(false);
   const [freeTitle, setFreeTitle] = useState("");
   const [freeContent, setFreeContent] = useState("");
   const [freeRegion, setFreeRegion] = useState("서울");
+  const [freeAnonymous, setFreeAnonymous] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // URL 파라미터에 따라 탭 초기값 설정
@@ -27,6 +30,12 @@ export default function CommunityWrite() {
       setActiveTab(type);
     }
   }, [type]);
+
+    useEffect(() => {
+      if (reviewCategory === "공연") {
+        setReviewAnonymous(false);
+      }
+    }, [reviewCategory]);
 
   const handleTab = (tab) => {
     setActiveTab(tab);
@@ -49,6 +58,7 @@ export default function CommunityWrite() {
           title: freeTitle.trim(),
           content: freeContent.trim(),
           regionTag: freeRegion,
+          isAnonymous: freeAnonymous,
         }),
       });
 
@@ -77,6 +87,7 @@ export default function CommunityWrite() {
           title: questionTitle.trim(),
           content: questionContent.trim(),
           regionTag: questionRegion,
+          isAnonymous: questionAnonymous,
         }),
       });
 
@@ -113,6 +124,7 @@ export default function CommunityWrite() {
           title: reviewTitle.trim(),
           content: reviewContent.trim(),
           rating,
+          isAnonymous: reviewAnonymous,
         }),
       });
 
@@ -140,6 +152,11 @@ export default function CommunityWrite() {
             value={questionTitle}
             onChange={(e) => setQuestionTitle(e.target.value)}
           />
+        {reviewCategory === "공연" && (
+          <div className="cm-write-row" style={{ color: "#999", fontSize: "12px" }}>
+            ※ 공연 후기는 익명으로 작성할 수 없습니다.
+          </div>
+        )}
         </div>
 
         <div className="cm-write-row">
@@ -165,6 +182,17 @@ export default function CommunityWrite() {
               <option>기타</option>
             </select>
           </div>
+        </div>
+
+        <div className="cm-write-row">
+          <label className="cm-write-label">
+            <input
+              type="checkbox"
+              checked={questionAnonymous}
+              onChange={(e) => setQuestionAnonymous(e.target.checked)}
+            />
+            익명으로 작성하기
+          </label>
         </div>
 
         <div className="cm-write-row">
@@ -284,6 +312,18 @@ export default function CommunityWrite() {
           <div className="cm-length-helper">{reviewContent.length} / 최소 50자</div>
         </div>
 
+        <div className="cm-write-row">
+          <label className="cm-write-label">
+            <input
+              type="checkbox"
+              checked={reviewAnonymous}
+              onChange={(e) => setReviewAnonymous(e.target.checked)}
+                disabled={reviewCategory === "공연"}
+            />
+            익명으로 작성하기
+          </label>
+        </div>
+
         {/* 작성 가이드 */}
         <div className="cm-guide-box">
           <div className="cm-guide-title">리뷰 작성 가이드</div>
@@ -350,6 +390,17 @@ export default function CommunityWrite() {
               <option>기타</option>
             </select>
           </div>
+        </div>
+
+        <div className="cm-write-row">
+          <label className="cm-write-label">
+            <input
+              type="checkbox"
+              checked={freeAnonymous}
+              onChange={(e) => setFreeAnonymous(e.target.checked)}
+            />
+            익명으로 작성하기
+          </label>
         </div>
 
         <div className="cm-write-actions">

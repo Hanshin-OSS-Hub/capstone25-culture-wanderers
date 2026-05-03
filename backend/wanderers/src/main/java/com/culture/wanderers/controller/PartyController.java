@@ -1,6 +1,8 @@
 package com.culture.wanderers.controller;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -99,7 +101,12 @@ public class PartyController {
         parties.forEach(this::attachPartyMetadata);
         return parties;
     }
-
+    @GetMapping("/api/users/{userEmail}/parties")
+    public List<Party> getUserParties(@PathVariable String userEmail) {
+        List<Party> parties = partyRepository.findByAuthorEmailOrderByCreatedAtDesc(userEmail);
+        parties.forEach(this::attachPartyMetadata);
+        return parties;
+    }
     @PostMapping("/api/party-posts")
     public Party createParty(
             @RequestBody Party party,
@@ -309,6 +316,60 @@ public class PartyController {
         }
 
         partyRepository.deleteById(id);
+    }
+
+    @PatchMapping("/api/party-posts/{id}/complete")
+    public Party completeParty(
+            @PathVariable Long id,
+            @RequestHeader(name = "Authorization", required = false) String authHeader
+    ) {
+        String email = extractEmail(authHeader);
+
+        Party party = partyRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "파티가 없습니다."));
+
+        if (party.getAuthorEmail() == null || !email.equalsIgnoreCase(party.getAuthorEmail())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "작성자만 완료 처리할 수 있습니다.");
+        }
+
+        if (party.getMeetingTime() != null && LocalDateTime.now().isBefore(party.getMeetingTime())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "모임 시간이 지나야 완료 처리할 수 있습니다.");
+        }
+
+        long approvedCount = partyMemberRepository.findByParty_IdOrderByCreatedAtAsc(id).stream()
+                .filter(member -> "APPROVED".equalsIgnoreCase(member.getStatus()))
+                .count();
+        if (approvedCount == 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "수락된 참여자가 있어야 완료 처리할 수 있습니다.");
+        }
+
+        party.setStatus("COMPLETED");
+
+        Party saved = partyRepository.save(party);
+        attachPartyMetadata(saved);
+        return saved;
+    }
+
+    @GetMapping("/api/me/party-review-targets")
+    public List<Party> getMyPartyReviewTargets(
+            @RequestHeader(name = "Authorization", required = false) String authHeader
+    ) {
+        String email = extractEmail(authHeader);
+
+        Map<Long, Party> reviewTargets = new LinkedHashMap<>();
+
+        partyRepository.findByAuthorEmail(email).stream()
+                .filter(party -> "COMPLETED".equalsIgnoreCase(party.getStatus()))
+                .forEach(party -> reviewTargets.put(party.getId(), party));
+
+        partyMemberRepository.findByUserEmailAndStatus(email, "APPROVED").stream()
+                .map(PartyMember::getParty)
+                .filter(party -> party != null && "COMPLETED".equalsIgnoreCase(party.getStatus()))
+                .forEach(party -> reviewTargets.putIfAbsent(party.getId(), party));
+
+        List<Party> parties = new ArrayList<>(reviewTargets.values());
+        parties.forEach(this::attachPartyMetadata);
+        return parties;
     }
 
     private String extractEmail(String authHeader) {
@@ -529,6 +590,10 @@ public class PartyController {
 
     private void syncPartyStatus(Party party) {
         if (party == null) {
+            return;
+        }
+
+        if ("COMPLETED".equalsIgnoreCase(party.getStatus())) {
             return;
         }
 

@@ -576,6 +576,15 @@
   font: inherit;
 }
 
+.party-comment-options {
+  grid-column: 1;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  color: #999;
+}
+
 .party-comment-write button,
 .party-comment-actions button {
   border: none;
@@ -589,6 +598,8 @@
 .party-comment-write button {
   min-width: 110px;
   padding: 0 18px;
+  grid-row: 1 / 3;
+  align-self: end;
 }
 
 .party-comments-empty {

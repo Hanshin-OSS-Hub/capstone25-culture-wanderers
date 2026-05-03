@@ -114,6 +114,35 @@ export default function PartyHistory() {
                     축제 상세 보기
                   </button>
                 ) : null}
+
+                {String(p.status || "").toUpperCase() === "COMPLETED" ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate("/mypage/reviews/new", {
+                        state: {
+                          targetType: "party",
+                          targetId: p.id,
+                          targetTitle: p.title || "파티",
+                        },
+                      });
+                    }}
+                    style={{
+                      marginTop: 8,
+                      marginLeft: 8,
+                      border: "1px solid #d8c7ff",
+                      background: "#f9f5ff",
+                      color: "#6b46c1",
+                      borderRadius: 8,
+                      padding: "4px 8px",
+                      fontSize: 12,
+                      cursor: "pointer",
+                    }}
+                  >
+                    후기 작성
+                  </button>
+                ) : null}
               </div>
 
               <span style={badgeStyle(p.status || "진행중")}>{p.status || "진행중"}</span>

@@ -9,6 +9,8 @@ public interface PartyRepository extends JpaRepository<Party, Long> {
 
     List<Party> findByAuthorEmail(String authorEmail);
 
+    List<Party> findByAuthorEmailOrderByCreatedAtDesc(String authorEmail);
+
     List<Party> findByFestivalId(Long festivalId);
 
     List<Party> findByFestivalIdAndStatus(Long festivalId, String status);

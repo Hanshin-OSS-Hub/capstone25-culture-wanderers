@@ -27,6 +27,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     List<Review> findByAuthorEmail(String authorEmail);
 
+    List<Review> findByAuthorEmailOrderByCreatedAtDesc(String authorEmail);
+
     List<Review> findAllByOrderByCreatedAtDesc();
 
     List<Review> findByTargetTypeAndTargetId(String targetType, Long targetId);

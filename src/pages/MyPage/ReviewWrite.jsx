@@ -13,6 +13,7 @@ export default function ReviewWrite() {
   const [title, setTitle] = useState("");
   const [rating, setRating] = useState(0);
   const [content, setContent] = useState("");
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -20,6 +21,9 @@ export default function ReviewWrite() {
 
     if (reviewTarget?.targetType) {
       setTargetType(reviewTarget.targetType);
+        if (reviewTarget.targetType === "party") {
+          setIsAnonymous(false);
+        }
     }
 
     if (reviewTarget?.targetId) {
@@ -51,6 +55,7 @@ export default function ReviewWrite() {
       title: title.trim(),
       rating: Number(rating),
       content: content.trim(),
+      isAnonymous,
     };
 
     try {
@@ -131,6 +136,24 @@ export default function ReviewWrite() {
               </span>
             ))}
           </div>
+        </div>
+
+        <div className="form-group">
+          <label>
+            <input
+              type="checkbox"
+              checked={isAnonymous}
+              onChange={(e) => setIsAnonymous(e.target.checked)}
+              disabled={isSubmitting}
+              disabled={isSubmitting || targetType === "party"}
+              />
+            익명으로 작성하기
+          </label>
+          {targetType === "party" && (
+            <div className="form-group" style={{ color: "#999", fontSize: "12px" }}>
+              ※ 파티 후기는 익명으로 작성할 수 없습니다.
+            </div>
+          )}
         </div>
 
         <div className="form-group">

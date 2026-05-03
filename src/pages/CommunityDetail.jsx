@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { authFetch } from "../api/authFetch";
@@ -7,9 +7,11 @@ import "./Community.css";
 
 export default function CommunityDetail() {
   const { id, type } = useParams();
+  const navigate = useNavigate();
   const [item, setItem] = useState(null);
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState("");
+  const [commentAnonymous, setCommentAnonymous] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
   const [editingPost, setEditingPost] = useState(false);
   const [postForm, setPostForm] = useState({ title: "", content: "" });
@@ -25,6 +27,7 @@ export default function CommunityDetail() {
     localStorage.getItem("nickname") || sessionStorage.getItem("nickname") || "";
 
   const commentTargetType = type === "review" ? "REVIEW" : "POST";
+  const isPartyComments = commentTargetType === "PARTY";
 
   const openPostEdit = () => {
     setPostForm({
@@ -82,6 +85,7 @@ export default function CommunityDetail() {
           targetType: commentTargetType,
           targetId: Number(id),
           content: commentText.trim(),
+          isAnonymous: commentAnonymous,
         }),
       });
 
@@ -99,6 +103,7 @@ export default function CommunityDetail() {
 
       setComments((prev) => [...prev, created]);
       setCommentText("");
+      setCommentAnonymous(false);
     } catch (e) {
       console.error("댓글 등록 실패:", e);
       alert(e.message || "댓글 등록에 실패했습니다.");
@@ -250,10 +255,12 @@ export default function CommunityDetail() {
   const title = item.title || "제목 없음";
   const body = item.content || "내용 없음";
   const category = isReview ? "리뷰" : isFree ? "자유" : "질문";
-  const author = item.userEmail || item.authorEmail || "익명";
+  const authorEmail = item.userEmail || item.authorEmail || null;
+  const authorNickname = item.authorNickname || "익명";
+  const author = authorNickname;
   const myPost =
     !!currentUserEmail &&
-    String(currentUserEmail).toLowerCase() === String(author).toLowerCase();
+    String(currentUserEmail).toLowerCase() === String(authorEmail || "").toLowerCase();
   const createdAt = item.createdAt ? String(item.createdAt).slice(0, 10) : "";
   const views = item.viewCount ?? 0;
   const likes = item.likeCount ?? 0;
@@ -261,6 +268,13 @@ export default function CommunityDetail() {
     isReview &&
     String(item.targetType || "").toLowerCase() === "festival" &&
     item.targetId;
+
+  const handleAuthorClick = (e) => {
+    e.preventDefault();
+    if (authorEmail && authorEmail !== "익명") {
+      navigate(`/profile/${authorEmail}`);
+    }
+  };
 
   return (
     <div className="page community-detail-page">
@@ -293,7 +307,15 @@ export default function CommunityDetail() {
             )}
 
             <div className="question-meta">
-              <span className="meta-author">{author}</span>
+              <span
+                className={`meta-author ${authorEmail && authorEmail !== "익명" ? "clickable" : ""}`}
+                onClick={handleAuthorClick}
+                style={{
+                  cursor: authorEmail && authorEmail !== "익명" ? "pointer" : "default",
+                }}
+              >
+                {author}
+              </span>
               {createdAt && (
                 <>
                   <span className="meta-dot">·</span>
@@ -360,6 +382,17 @@ export default function CommunityDetail() {
               placeholder="댓글을 입력하세요"
               disabled={submittingComment}
             />
+            <div className="community-comment-options">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={commentAnonymous}
+                  onChange={(e) => setCommentAnonymous(e.target.checked)}
+                  disabled={submittingComment}
+                />
+                익명으로 작성하기
+              </label>
+            </div>
             <button type="button" onClick={handleCommentSubmit} disabled={submittingComment}>
               {submittingComment ? "등록 중..." : "댓글 등록"}
             </button>
