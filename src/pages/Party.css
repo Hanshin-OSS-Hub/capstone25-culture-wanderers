@@ -559,8 +559,9 @@
 }
 
 .party-comment-write {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   gap: 12px;
   margin-bottom: 18px;
 }
@@ -577,7 +578,6 @@
 }
 
 .party-comment-options {
-  grid-column: 1;
   display: flex;
   gap: 8px;
   align-items: center;
@@ -596,10 +596,10 @@
 }
 
 .party-comment-write button {
-  min-width: 110px;
+  width: 100%;
+  min-height: 42px;
   padding: 0 18px;
-  grid-row: 1 / 3;
-  align-self: end;
+  align-self: stretch;
 }
 
 .party-comments-empty {
@@ -782,12 +782,7 @@
 
 @media (max-width: 768px) {
   .party-comment-write {
-    grid-template-columns: 1fr;
-  }
-
-  .party-comment-write button {
-    width: 100%;
-    min-height: 44px;
+    gap: 10px;
   }
 
   .party-modal-row {

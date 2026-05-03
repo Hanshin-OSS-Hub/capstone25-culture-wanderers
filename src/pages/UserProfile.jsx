@@ -1,7 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { authFetch } from "../api/authFetch";
 import "./UserProfile.css";
+
+const API_BASE = "http://localhost:8080";
+
+async function publicFetch(path) {
+  const response = await fetch(`${API_BASE}${path}`);
+  if (!response.ok) {
+    throw new Error(`요청 실패: ${response.status}`);
+  }
+  return response.json();
+}
 
 export default function UserProfile() {
   const { userEmail } = useParams();
@@ -18,17 +27,18 @@ export default function UserProfile() {
     const load = async () => {
       try {
         setLoading(true);
+        const encodedUserEmail = encodeURIComponent(userEmail);
 
         // 파티 모집글 로드
-        const partiesData = await authFetch(`/api/users/${userEmail}/parties`);
+        const partiesData = await publicFetch(`/api/users/${encodedUserEmail}/parties`);
         setParties(Array.isArray(partiesData) ? partiesData : []);
 
         // 후기 로드
-        const reviewsData = await authFetch(`/api/users/${userEmail}/reviews`);
+        const reviewsData = await publicFetch(`/api/users/${encodedUserEmail}/reviews`);
         setReviews(Array.isArray(reviewsData) ? reviewsData : []);
 
         // 커뮤니티 게시글 로드
-        const postsData = await authFetch(`/api/users/${userEmail}/posts`);
+        const postsData = await publicFetch(`/api/users/${encodedUserEmail}/posts`);
         setPosts(Array.isArray(postsData) ? postsData : []);
 
         // 유저명 추출 (첫 파티/후기/게시글에서)
@@ -55,6 +65,20 @@ export default function UserProfile() {
 
   const festivalReviews = reviews.filter((r) => r.targetType === "festival");
   const partyReviews = reviews.filter((r) => r.targetType === "party");
+
+  const getPartyStatusLabel = (status) => {
+    const value = String(status || "").toUpperCase();
+    if (value === "COMPLETED") return "파티 완료";
+    if (value === "RECRUITING") return "모집 중";
+    return "모집 마감";
+  };
+
+  const getPartyStatusClass = (status) => {
+    const value = String(status || "").toUpperCase();
+    if (value === "COMPLETED") return "completed";
+    if (value === "RECRUITING") return "recruiting";
+    return "closed";
+  };
 
   if (loading) {
     return <div className="profile-loading">프로필을 불러오는 중이에요.</div>;
@@ -128,8 +152,8 @@ export default function UserProfile() {
                       <span>[일정] {party.date || "미정"}</span>
                       <span>[장소] {party.location || "미정"}</span>
                     </div>
-                    <div className="profile-card-status">
-                      {party.status === "모집 중" ? "모집 중" : "모집 마감"}
+                    <div className={`profile-card-status ${getPartyStatusClass(party.status)}`}>
+                      {getPartyStatusLabel(party.status)}
                     </div>
                   </div>
                 ))}
@@ -148,7 +172,7 @@ export default function UserProfile() {
                   <div
                     key={review.id}
                     className="profile-card review-card"
-                    onClick={() => navigate(`/reviews/${review.id}`)}
+                    onClick={() => navigate(`/community/review/${review.id}`)}
                     style={{ cursor: "pointer" }}
                   >
                     <div className="profile-card-title">{review.title}</div>
@@ -176,7 +200,7 @@ export default function UserProfile() {
                   <div
                     key={review.id}
                     className="profile-card review-card"
-                    onClick={() => navigate(`/reviews/${review.id}`)}
+                    onClick={() => navigate(`/community/review/${review.id}`)}
                     style={{ cursor: "pointer" }}
                   >
                     <div className="profile-card-title">{review.title}</div>

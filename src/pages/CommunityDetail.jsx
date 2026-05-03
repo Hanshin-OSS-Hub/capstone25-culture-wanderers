@@ -27,8 +27,6 @@ export default function CommunityDetail() {
     localStorage.getItem("nickname") || sessionStorage.getItem("nickname") || "";
 
   const commentTargetType = type === "review" ? "REVIEW" : "POST";
-  const isPartyComments = commentTargetType === "PARTY";
-
   const openPostEdit = () => {
     setPostForm({
       title: item?.title || "",
@@ -54,10 +52,10 @@ export default function CommunityDetail() {
         const response = await axios.get(url);
         setItem(response.data);
 
-        const commentsResponse = await axios.get(
-          `http://localhost:8080/api/comments?targetType=${commentTargetType}&targetId=${id}`
+        const commentsData = await authFetch(
+          `/api/comments?targetType=${commentTargetType}&targetId=${id}`
         );
-        setComments(Array.isArray(commentsResponse.data) ? commentsResponse.data : []);
+        setComments(Array.isArray(commentsData) ? commentsData : []);
       } catch (e) {
         console.error("커뮤니티 상세 로딩 실패:", e);
         setItem(null);
@@ -404,14 +402,26 @@ export default function CommunityDetail() {
             <div className="community-comments-list">
               {comments.map((comment) => {
                 const mine =
+                  comment.editableByViewer ||
                   currentUserEmail &&
                   String(currentUserEmail).toLowerCase() ===
                     String(comment.userEmail || "").toLowerCase();
+                const canOpenProfile = !comment.isAnonymous && comment.userEmail;
 
                 return (
                   <article key={comment.id} className="community-comment-item">
                     <div className="community-comment-meta">
-                      <span>{comment.userNickname || comment.userEmail || "익명"}</span>
+                      <span
+                        className={canOpenProfile ? "meta-author clickable" : ""}
+                        onClick={() => {
+                          if (canOpenProfile) {
+                            navigate(`/profile/${comment.userEmail}`);
+                          }
+                        }}
+                        style={{ cursor: canOpenProfile ? "pointer" : "default" }}
+                      >
+                        {comment.userNickname || comment.userEmail || "익명"}
+                      </span>
                       <span>{comment.createdAt ? String(comment.createdAt).slice(0, 16).replace("T", " ") : ""}</span>
                     </div>
                     {mine && Number(editingCommentId) === Number(comment.id) ? (
