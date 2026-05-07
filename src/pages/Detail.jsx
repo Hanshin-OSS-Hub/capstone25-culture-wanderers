@@ -11,6 +11,7 @@ import { getCompanionTrust } from '../utils/companionTrustStorage';
 import '../App.css';
 
 const KAKAO_MAP_KEY = (import.meta.env.VITE_KAKAO_MAP_KEY || "").trim();
+const hasValidKakaoMapKey = Boolean(KAKAO_MAP_KEY) && !KAKAO_MAP_KEY.toLowerCase().includes("your_kakao");
 const hasStoredAuth = () =>
   Boolean(localStorage.getItem("token") || sessionStorage.getItem("token"));
 
@@ -54,7 +55,7 @@ function loadKakaoMapSdk() {
       return;
     }
 
-    if (!KAKAO_MAP_KEY) {
+    if (!hasValidKakaoMapKey) {
       reject(new Error('VITE_KAKAO_MAP_KEY가 설정되지 않았습니다.'));
       return;
     }
@@ -65,10 +66,7 @@ function loadKakaoMapSdk() {
     script.async = true;
 
     script.onload = onLoadKakao;
-    script.onerror = () => {
-      console.error("카카오 SDK 로드 실패 URL:", script.src);
-      reject(new Error('카카오맵 SDK 스크립트 로드에 실패했습니다.'));
-    };
+    script.onerror = () => reject(new Error('카카오맵 SDK 스크립트 로드에 실패했습니다.'));
 
     document.head.appendChild(script);
   });
@@ -408,7 +406,7 @@ export default function Detail() {
         if (String(e?.message || '').includes('VITE_KAKAO_MAP_KEY')) {
           console.warn('카카오맵 키가 없어 지도 영역을 안내 문구로 대체합니다.');
         } else {
-          console.error('카카오맵 초기화 실패:', e);
+          console.warn('카카오맵 초기화 실패:', e);
         }
         setMapError('카카오맵을 불러오지 못했습니다.');
       }
