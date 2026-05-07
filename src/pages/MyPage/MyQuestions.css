@@ -1,0 +1,108 @@
+.myquestions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.myquestions-empty {
+  color: #666;
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.myquestions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.myquestions-card {
+  padding: 16px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.myquestions-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  color: #777;
+  margin-bottom: 8px;
+}
+
+.myquestions-title {
+  margin: 6px 0;
+}
+
+.myquestions-content {
+  margin: 8px 0 0;
+  color: #333;
+  white-space: pre-wrap;
+}
+
+.myquestions-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.btn-edit,
+.btn-delete,
+.btn-save {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-edit {
+  background: #eee;
+}
+
+.btn-delete {
+  background: #ffe5e5;
+  color: #d60000;
+}
+
+.btn-save {
+  background: #3e7bfa;
+  color: #fff;
+}
+
+.myquestions-edit-card {
+  margin-top: 16px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.myquestions-form {
+  display: grid;
+  gap: 12px;
+}
+
+.myquestions-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  color: #333;
+}
+
+.myquestions-form input,
+.myquestions-form textarea,
+.myquestions-form select {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 14px;
+}
+
+.myquestions-form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}

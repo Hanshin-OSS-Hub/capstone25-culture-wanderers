@@ -1,0 +1,171 @@
+/* src/pages/Signup.css */
+
+/* Login.css의 레이아웃/카드/인풋 스타일을 그대로 쓰기 위해,
+   클래스명은 login-* 재사용하고, signup-*만 추가로 정의 */
+
+.signup-card {
+  /* 회원가입은 필드가 많아서 패딩만 살짝 보강 */
+  padding-bottom: 26px;
+}
+
+/* 인풋 + 버튼 한 줄 */
+.signup-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.signup-mt8 {
+  margin-top: 8px;
+}
+
+/* 중복확인/발송 같은 작은 버튼 */
+.signup-mini-btn {
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  background: #ffbcd6;
+  color: #ffffff;
+  white-space: nowrap;
+  transition: background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.signup-mini-btn:hover:not(:disabled) {
+  background: linear-gradient(90deg, #ff6fa6, #ff3f7f);
+  box-shadow: 0 10px 22px rgba(255, 111, 166, 0.22);
+}
+
+.signup-mini-btn:disabled {
+  opacity: 0.65;
+  cursor: default;
+  box-shadow: none;
+}
+
+.signup-mini-btn.outline {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+}
+
+/* select는 login-input 느낌으로 */
+.signup-select {
+  width: 100%;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  padding: 0 12px;
+  font-size: 13px;
+  outline: none;
+  background: #f9fafb;
+}
+
+.signup-select:focus {
+  border-color: #ff8db5;
+  box-shadow: 0 0 0 1px rgba(255, 141, 181, 0.18);
+}
+
+/* 비밀번호 보기 버튼 */
+.signup-with-icon {
+  position: relative;
+}
+
+.signup-icon-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.signup-ok {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #16a34a;
+}
+
+/* 인증 상태 */
+.signup-status {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.signup-status.ok {
+  color: #16a34a;
+  font-weight: 700;
+}
+
+/* 약관 체크 */
+.signup-terms {
+  margin: 10px 0 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.signup-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.signup-check input {
+  width: 14px;
+  height: 14px;
+}
+
+
+
+
+
+/*2026.02.02 대학교 리스트*/
+/* 자동완성 wrapper */
+.uni-wrap {
+  position: relative;
+  width: 100%;
+}
+
+/* 입력창 바로 아래 뜨는 드롭다운 */
+.uni-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);   /* 입력 바 바로 아래 */
+  left: 0;
+  width: 100%;             /* 입력 바와 동일한 폭 */
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+/* 각 학교 항목 */
+.uni-item {
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 13px;
+  cursor: pointer;
+  color: #374151;
+}
+
+.uni-item:hover {
+  background: #fff0f5;
+}
+
+.uni-item.empty {
+  color: #9ca3af;
+  cursor: default;
+}
