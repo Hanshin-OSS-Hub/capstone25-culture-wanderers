@@ -242,16 +242,16 @@ export default function UserProfile() {
             <span>팔로잉 {followStats.followingCount}</span>
             <button type="button" onClick={handleToggleFollow} disabled={followLoading || isMine}>
               {isMine ? "내 프로필" : followLoading ? "처리 중..." : followStats.following ? "팔로우 취소" : "팔로우"}
-                      {rank && (
-                        <div className="profile-rank-row">
-                          <span className="rank-emoji">{rank.rankEmoji}</span>
-                          <span className="rank-title">{rank.rankTitle}</span>
-                          <span className="rank-level">Lv.{rank.level}</span>
-                          <span className="rank-points">{rank.points?.toFixed(1) || 0}점</span>
-                        </div>
-                      )}
             </button>
           </div>
+          {rank && (
+            <div className="profile-rank-row">
+              <span className="rank-emoji">{rank.rankEmoji}</span>
+              <span className="rank-title">{rank.rankTitle}</span>
+              <span className="rank-level">Lv.{rank.level}</span>
+              <span className="rank-points">{rank.points?.toFixed(1) || 0}점</span>
+            </div>
+          )}
         </div>
 
         <div className="profile-earned-badges" aria-label="획득한 문화 배지">
