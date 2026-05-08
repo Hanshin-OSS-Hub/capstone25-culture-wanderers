@@ -195,6 +195,7 @@ export default function MyPageHome() {
     getDeadlineNotificationSettings(user?.email)
   );
   const [badgePage, setBadgePage] = useState(0);
+  const [rank, setRank] = useState(null);
 
   useEffect(() => {
     const safeCount = (result) => {
@@ -215,6 +216,7 @@ export default function MyPageHome() {
         journeyResult,
         preferenceResult,
         followingSavesResult,
+        rankResult,
       ] =
         await Promise.allSettled([
           authFetch("/api/me/reviews"),
@@ -225,6 +227,7 @@ export default function MyPageHome() {
           authFetch("/api/me/journey"),
           authFetch("/api/recommend/preferences"),
           authFetch("/api/me/following-saved-festivals"),
+          authFetch("/api/me/rank"),
         ]);
 
       const localLikedCount = getLikedFestivals().length;
@@ -262,6 +265,10 @@ export default function MyPageHome() {
           ? followingSavesResult.value
           : []
       );
+
+      if (rankResult.status === "fulfilled") {
+        setRank(rankResult.value);
+      }
     };
 
     fetchPageData();
@@ -536,6 +543,39 @@ export default function MyPageHome() {
             </div>
           </div>
         </div>
+
+        {/* 등급 정보 카드 */}
+        {rank && (
+          <div className="mypage-rank-card">
+            <div className="rank-badge">
+              <div className="rank-emoji">{rank.rankEmoji}</div>
+              <div className="rank-info">
+                <div className="rank-title">{rank.rankTitle}</div>
+                <div className="rank-level">Lv.{rank.level}</div>
+              </div>
+            </div>
+            <div className="rank-details">
+              <div className="points-display">
+                <span className="points-label">신뢰 점수</span>
+                <span className="points-value">{rank.points?.toFixed(1) || 0}점</span>
+              </div>
+              {rank.nextRankTitle && (
+                <div className="progress-section">
+                  <div className="progress-label">
+                    다음 등급: {rank.nextRankTitle} (
+                    {rank.nextRankMin}점까지 {(rank.nextRankMin - rank.points).toFixed(1)}점 남음)
+                  </div>
+                  <div className="progress-bar">
+                    <div 
+                      className="progress-fill" 
+                      style={{ width: `${Math.min(100, Math.max(0, ((rank.points - (rank.level === 1 ? 0 : (rank.level === 2 ? 51 : rank.level === 3 ? 151 : rank.level === 4 ? 301 : rank.level === 5 ? 601 : 1001))) / (rank.nextRankMin - (rank.level === 1 ? 0 : (rank.level === 2 ? 51 : rank.level === 3 ? 151 : rank.level === 4 ? 301 : rank.level === 5 ? 601 : 1001)))) * 100))}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="mypage-preference-card">
           <div className="preference-card-header">

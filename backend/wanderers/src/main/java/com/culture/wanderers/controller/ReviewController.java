@@ -13,6 +13,7 @@ import com.culture.wanderers.repository.ReviewRepository;
 import com.culture.wanderers.repository.UserRepository;
 import com.culture.wanderers.repository.VisitedFestivalRepository;
 import com.culture.wanderers.service.UserActivityService;
+import com.culture.wanderers.service.UserRankService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -44,6 +45,7 @@ public class ReviewController {
     private final VisitedFestivalRepository visitedFestivalRepository;
     private final JwtUtil jwtUtil;
     private final UserActivityService userActivityService;
+    private final UserRankService userRankService;
 
     public ReviewController(
             ReviewRepository reviewRepository,
@@ -54,7 +56,8 @@ public class ReviewController {
             UserRepository userRepository,
             VisitedFestivalRepository visitedFestivalRepository,
             JwtUtil jwtUtil,
-            UserActivityService userActivityService
+            UserActivityService userActivityService,
+            UserRankService userRankService
     ) {
         this.reviewRepository = reviewRepository;
         this.commentRepository = commentRepository;
@@ -65,6 +68,7 @@ public class ReviewController {
         this.visitedFestivalRepository = visitedFestivalRepository;
         this.jwtUtil = jwtUtil;
         this.userActivityService = userActivityService;
+        this.userRankService = userRankService;
     }
 
     @GetMapping("/api/reviews")
@@ -111,6 +115,18 @@ public class ReviewController {
         }
 
         Review savedReview = reviewRepository.save(review);
+
+        // 포인트 추가
+        double points = 0.0;
+        if ("festival".equalsIgnoreCase(savedReview.getTargetType())) {
+            points = 8.0;
+        } else if ("party".equalsIgnoreCase(savedReview.getTargetType())) {
+            points = 12.0;
+        }
+        if (savedReview.getRating() >= 4) {
+            points += 10.0;
+        }
+        userRankService.addPoints(email, points);
 
         if ("festival".equalsIgnoreCase(savedReview.getTargetType())) {
             userActivityService.save(email, "review", savedReview.getTargetId(), null, null, savedReview.getTargetTitle());

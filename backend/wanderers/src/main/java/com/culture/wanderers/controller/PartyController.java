@@ -29,6 +29,7 @@ import com.culture.wanderers.repository.PartyMemberRepository;
 import com.culture.wanderers.repository.PartyRepository;
 import com.culture.wanderers.repository.UserRepository;
 import com.culture.wanderers.service.UserActivityService;
+import com.culture.wanderers.service.UserRankService;
 
 import jakarta.transaction.Transactional;
 
@@ -43,6 +44,7 @@ public class PartyController {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final UserActivityService userActivityService;
+    private final UserRankService userRankService;
 
     public PartyController(
             PartyRepository partyRepository,
@@ -51,7 +53,8 @@ public class PartyController {
             FestivalRepository festivalRepository,
             UserRepository userRepository,
             JwtUtil jwtUtil,
-            UserActivityService userActivityService
+            UserActivityService userActivityService,
+            UserRankService userRankService
     ) {
         this.partyRepository = partyRepository;
         this.partyMemberRepository = partyMemberRepository;
@@ -60,6 +63,7 @@ public class PartyController {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.userActivityService = userActivityService;
+        this.userRankService = userRankService;
     }
 
     @GetMapping("/api/me/party-posts")
@@ -343,6 +347,17 @@ public class PartyController {
         party.setStatus("COMPLETED");
 
         Party saved = partyRepository.save(party);
+        
+        // 호스트에게 포인트 추가
+        userRankService.addPoints(email, 30.0);
+        
+        // 승인된 멤버들에게 포인트 추가
+        partyMemberRepository.findByParty_IdOrderByCreatedAtAsc(id).stream()
+                .filter(member -> "APPROVED".equalsIgnoreCase(member.getStatus()))
+                .forEach(member -> {
+                    userRankService.addPoints(member.getUserEmail(), 25.0);
+                });
+        
         attachPartyMetadata(saved);
         return saved;
     }
