@@ -236,7 +236,14 @@ export default function UserProfile() {
             <h1 className="profile-name">{userName || "사용자"}</h1>
             <UserTrustBadge email={userEmail} />
           </div>
-          <p className="profile-email">{userEmail}</p>
+          {rank && (
+            <div className="profile-rank-row profile-rank-inline">
+              <span className="rank-emoji">{rank.rankEmoji}</span>
+              <span className="rank-title">{rank.rankTitle}</span>
+              <span className="rank-level">Lv.{rank.level}</span>
+              <span className="rank-points">{rank.points?.toFixed(1) || 0}점</span>
+            </div>
+          )}
           <div className="profile-follow-row">
             <span>팔로워 {followStats.followerCount}</span>
             <span>팔로잉 {followStats.followingCount}</span>
@@ -244,14 +251,6 @@ export default function UserProfile() {
               {isMine ? "내 프로필" : followLoading ? "처리 중..." : followStats.following ? "팔로우 취소" : "팔로우"}
             </button>
           </div>
-          {rank && (
-            <div className="profile-rank-row">
-              <span className="rank-emoji">{rank.rankEmoji}</span>
-              <span className="rank-title">{rank.rankTitle}</span>
-              <span className="rank-level">Lv.{rank.level}</span>
-              <span className="rank-points">{rank.points?.toFixed(1) || 0}점</span>
-            </div>
-          )}
         </div>
 
         <div className="profile-earned-badges" aria-label="획득한 문화 배지">
