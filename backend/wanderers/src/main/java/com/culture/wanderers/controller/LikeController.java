@@ -1,8 +1,11 @@
 package com.culture.wanderers.controller;
 
 import com.culture.wanderers.entity.UserLike;
+import com.culture.wanderers.entity.Review;
 import com.culture.wanderers.jwt.JwtUtil;
+import com.culture.wanderers.repository.ReviewRepository;
 import com.culture.wanderers.repository.UserLikeRepository;
+import com.culture.wanderers.service.UserRankService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -16,10 +19,14 @@ public class LikeController {
 
     private final UserLikeRepository userLikeRepository;
     private final JwtUtil jwtUtil;
+    private final ReviewRepository reviewRepository;
+    private final UserRankService userRankService;
 
-    public LikeController(UserLikeRepository userLikeRepository, JwtUtil jwtUtil) {
+    public LikeController(UserLikeRepository userLikeRepository, JwtUtil jwtUtil, ReviewRepository reviewRepository, UserRankService userRankService) {
         this.userLikeRepository = userLikeRepository;
         this.jwtUtil = jwtUtil;
+        this.reviewRepository = reviewRepository;
+        this.userRankService = userRankService;
     }
 
     // 좋아요 추가
@@ -47,6 +54,18 @@ public class LikeController {
         userLike.setUserEmail(email);
         userLike.setTargetType(targetType);
         userLike.setTargetId(targetId);
+
+        if ("review".equalsIgnoreCase(targetType)) {
+            Review review = reviewRepository.findById(targetId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "리뷰 없음"));
+
+            if (review.getAuthorEmail() != null && !review.getAuthorEmail().equalsIgnoreCase(email)) {
+                userRankService.addPoints(
+                        review.getAuthorEmail(),
+                        userRankService.pointsForReviewLike(review.getTargetType())
+                );
+            }
+        }
 
         return userLikeRepository.save(userLike);
     }

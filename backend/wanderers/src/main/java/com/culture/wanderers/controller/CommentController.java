@@ -4,6 +4,7 @@ import com.culture.wanderers.entity.Comment;
 import com.culture.wanderers.jwt.JwtUtil;
 import com.culture.wanderers.repository.CommentRepository;
 import com.culture.wanderers.repository.UserRepository;
+import com.culture.wanderers.service.UserRankService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,11 +29,13 @@ public class CommentController {
     private final CommentRepository commentRepository;
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
+    private final UserRankService userRankService;
 
-    public CommentController(CommentRepository commentRepository, JwtUtil jwtUtil, UserRepository userRepository) {
+    public CommentController(CommentRepository commentRepository, JwtUtil jwtUtil, UserRepository userRepository, UserRankService userRankService) {
         this.commentRepository = commentRepository;
         this.jwtUtil = jwtUtil;
         this.userRepository = userRepository;
+        this.userRankService = userRankService;
     }
 
     @GetMapping("/api/comments")
@@ -88,6 +91,8 @@ public class CommentController {
         }
 
         Comment saved = commentRepository.save(comment);
+        double points = userRankService.pointsForComment(comment.getTargetType());
+        userRankService.addPoints(email, points);
         applyCommentVisibility(saved, email);
         return saved;
     }

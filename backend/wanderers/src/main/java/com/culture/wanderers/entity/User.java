@@ -35,6 +35,9 @@ public class User {
 
     private Integer level;
 
+    @Column(name = "trust_points")
+    private Double trustPoints = 0.0;
+
     private String provider;
 
     @Column(name = "sns_id")
@@ -42,4 +45,10 @@ public class User {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Transient
+    private String rankEmoji;
+
+    @Transient
+    private String rankTitle;
 }

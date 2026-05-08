@@ -6,6 +6,7 @@ import com.culture.wanderers.jwt.JwtUtil;
 import com.culture.wanderers.repository.CommentRepository;
 import com.culture.wanderers.repository.PostRepository;
 import com.culture.wanderers.repository.UserRepository;
+import com.culture.wanderers.service.UserRankService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,12 +32,14 @@ public class PostController {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+    private final UserRankService userRankService;
 
-    public PostController(PostRepository postRepository, CommentRepository commentRepository, UserRepository userRepository, JwtUtil jwtUtil) {
+    public PostController(PostRepository postRepository, CommentRepository commentRepository, UserRepository userRepository, JwtUtil jwtUtil, UserRankService userRankService) {
         this.postRepository = postRepository;
         this.commentRepository = commentRepository;
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
+        this.userRankService = userRankService;
     }
 
     @GetMapping("/api/posts")
@@ -97,6 +100,7 @@ public class PostController {
         }
 
         Post saved = postRepository.save(post);
+        userRankService.addPoints(email, 1.0);
         setAuthorNickname(saved);
         maskAnonymousUser(saved);
         return saved;
