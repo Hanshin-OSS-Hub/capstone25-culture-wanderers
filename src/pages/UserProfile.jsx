@@ -72,19 +72,21 @@ export default function UserProfile() {
   });
   const [followLoading, setFollowLoading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [rank, setRank] = useState(null);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
         const encodedUserEmail = encodeURIComponent(userEmail);
-        const [partiesResult, reviewsResult, postsResult, savedResult, journeyResult] =
+        const [partiesResult, reviewsResult, postsResult, savedResult, journeyResult, rankResult] =
           await Promise.allSettled([
             publicFetch(`/api/users/${encodedUserEmail}/parties`),
             publicFetch(`/api/users/${encodedUserEmail}/reviews`),
             publicFetch(`/api/users/${encodedUserEmail}/posts`),
             publicFetch(`/api/users/${encodedUserEmail}/saved-festivals`),
             publicFetch(`/api/users/${encodedUserEmail}/journey`),
+            publicFetch(`/api/users/${encodedUserEmail}/rank`),
           ]);
 
         const safeParties = safeArray(partiesResult);
@@ -97,6 +99,9 @@ export default function UserProfile() {
         setPosts(safePosts);
         setSavedFestivals(safeSaved);
         setJourney(journeyResult.status === "fulfilled" ? journeyResult.value : null);
+        if (rankResult.status === "fulfilled") {
+          setRank(rankResult.value);
+        }
 
         if (isMine) {
           try {
@@ -237,6 +242,14 @@ export default function UserProfile() {
             <span>팔로잉 {followStats.followingCount}</span>
             <button type="button" onClick={handleToggleFollow} disabled={followLoading || isMine}>
               {isMine ? "내 프로필" : followLoading ? "처리 중..." : followStats.following ? "팔로우 취소" : "팔로우"}
+                      {rank && (
+                        <div className="profile-rank-row">
+                          <span className="rank-emoji">{rank.rankEmoji}</span>
+                          <span className="rank-title">{rank.rankTitle}</span>
+                          <span className="rank-level">Lv.{rank.level}</span>
+                          <span className="rank-points">{rank.points?.toFixed(1) || 0}점</span>
+                        </div>
+                      )}
             </button>
           </div>
         </div>
