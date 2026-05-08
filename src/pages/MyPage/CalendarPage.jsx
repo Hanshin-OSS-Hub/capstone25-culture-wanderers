@@ -356,7 +356,9 @@ export default function CalendarPage() {
     return `${year}-${month}-${day}`;
   };
 
-  const isPastSchedule = (event) => String(event?.date || "") <= getTodayDate();
+  const isPastSchedule = (event) =>
+    Boolean(event?.visitedCandidate || event?.verifiedVisit) ||
+    String(event?.date || "") <= getTodayDate();
 
   const updateEventDate = (eventId, nextDate) => {
     const next = updateCalendarEvent(eventId, { date: nextDate });

@@ -98,6 +98,13 @@ export default function Friends() {
   }, []);
 
   const loadFollowingSaves = useCallback(async () => {
+    if (!isAuthed) {
+      setFollowingSavedFestivals([]);
+      setPendingRequestKeys(new Set());
+      setSaveLoading(false);
+      return;
+    }
+
     try {
       setSaveLoading(true);
       const data = await authFetch("/api/me/following-saved-festivals");
@@ -111,7 +118,7 @@ export default function Friends() {
     } finally {
       setSaveLoading(false);
     }
-  }, [refreshPendingRequests]);
+  }, [isAuthed, refreshPendingRequests]);
 
   useEffect(() => {
     loadUsers();

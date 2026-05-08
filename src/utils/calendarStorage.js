@@ -43,11 +43,29 @@ function migrateLegacyEventsIfNeeded(userEmail = getStoredUserEmail()) {
   if (existing.length > 0) return existing;
 
   const legacy = safeParse(localStorage.getItem(LEGACY_CALENDAR_STORAGE_KEY), []);
-  if (legacy.length === 0) return existing;
+  const guestKey = `${CALENDAR_STORAGE_PREFIX}:guest`;
+  const guest = key === guestKey ? [] : safeParse(localStorage.getItem(guestKey), []);
+  const candidates = [...legacy, ...guest];
+  if (candidates.length === 0) return existing;
 
-  localStorage.setItem(key, JSON.stringify(legacy));
-  localStorage.removeItem(LEGACY_CALENDAR_STORAGE_KEY);
-  return legacy;
+  const seen = new Set();
+  const migrated = candidates.filter((event) => {
+    const eventKey = [
+      String(event?.id || ""),
+      String(event?.date || ""),
+      String(event?.title || ""),
+      String(event?.festivalId || ""),
+    ].join("|");
+    if (seen.has(eventKey)) return false;
+    seen.add(eventKey);
+    return true;
+  });
+
+  localStorage.setItem(key, JSON.stringify(migrated));
+  if (legacy.length > 0) {
+    localStorage.removeItem(LEGACY_CALENDAR_STORAGE_KEY);
+  }
+  return migrated;
 }
 
 export function getCalendarEvents(userEmail = getStoredUserEmail()) {
