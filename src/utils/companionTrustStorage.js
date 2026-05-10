@@ -1,5 +1,14 @@
 const TRUST_STORAGE_KEY = "culture_wanderers_companion_trust";
 
+export const COMPANION_TEMPERATURE_GUIDE = [
+  { range: "90℃ 이상", label: "매우 든든해요", description: "좋은 동행 평가가 여러 번 쌓인 상태예요." },
+  { range: "80 ~ 89℃", label: "함께 가기 좋아요", description: "긍정적인 동행 평가가 안정적으로 있어요." },
+  { range: "65 ~ 79℃", label: "믿을만해요", description: "기본 신뢰가 있고 평가가 더 쌓이면 좋아요." },
+  { range: "50 ~ 64℃", label: "기본 신뢰", description: "동행을 시작해볼 수 있지만 후기를 확인해보세요." },
+  { range: "40 ~ 49℃", label: "평가 부족", description: "아직 판단할 만큼 동행 평가가 많지 않아요." },
+  { range: "39℃ 이하", label: "확인 필요", description: "동행 전 대화와 약속 확인을 더 꼼꼼히 해주세요." },
+];
+
 function safeParse(json, fallback = {}) {
   try {
     const parsed = JSON.parse(json);
@@ -21,6 +30,16 @@ function dispatchTrustChange(targetEmail) {
   );
 }
 
+function getTemperatureLabel(score, count) {
+  if (count <= 0) return "아직 동행 평가가 부족해요";
+  if (score >= 90) return "매우 든든해요";
+  if (score >= 80) return "함께 가기 좋아요";
+  if (score >= 65) return "믿을만해요";
+  if (score >= 50) return "기본 신뢰";
+  if (score >= 40) return "평가 부족";
+  return "확인 필요";
+}
+
 export function getAllCompanionTrust() {
   return safeParse(localStorage.getItem(TRUST_STORAGE_KEY), {});
 }
@@ -33,22 +52,20 @@ export function getCompanionTrust(email) {
   const average =
     ratings.length > 0
       ? ratings.reduce((sum, item) => sum + Number(item.score || 0), 0) / ratings.length
-      : 3.8;
-  const score = Math.round(Math.max(40, Math.min(99, 50 + average * 10 + Math.min(ratings.length, 10))));
+      : 0;
+  const score =
+    ratings.length > 0
+      ? Math.round(Math.max(30, Math.min(95, 40 + average * 7 + Math.min(ratings.length * 3, 15))))
+      : 45;
+  const label = getTemperatureLabel(score, ratings.length);
 
   return {
     email: key,
     score,
     count: ratings.length,
     average,
-    label:
-      score >= 90
-        ? "믿고 함께 가기 좋은 유목민"
-        : score >= 80
-        ? "함께 가기 좋은 유목민"
-        : score >= 65
-        ? "무난한 유목민"
-        : "조금 더 확인이 필요한 유목민",
+    ratings,
+    label,
   };
 }
 

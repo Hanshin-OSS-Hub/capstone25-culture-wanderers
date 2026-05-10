@@ -8,13 +8,218 @@
   border-radius: 999px;
   background: #fff7fa;
   color: #d14b72;
+  cursor: pointer;
+  font: inherit;
   font-size: 12px;
   font-weight: 800;
   white-space: nowrap;
+  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out, border-color 0.15s ease-out;
+}
+
+.user-trust-badge:hover {
+  border-color: #ff8fb1;
+  box-shadow: 0 8px 18px rgba(255, 111, 166, 0.14);
+  transform: translateY(-1px);
+}
+
+.user-trust-badge:focus-visible {
+  outline: 2px solid rgba(255, 83, 139, 0.32);
+  outline-offset: 3px;
 }
 
 .user-trust-badge.compact {
   min-height: 22px;
   padding: 0 8px;
   font-size: 11px;
+}
+
+.trust-label {
+  color: #9f4f68;
+}
+
+.trust-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(17, 24, 39, 0.24);
+}
+
+.trust-modal {
+  width: min(470px, 100%);
+  max-height: min(720px, calc(100vh - 48px));
+  overflow: auto;
+  border: 1px solid rgba(255, 182, 210, 0.65);
+  border-radius: 18px;
+  background: #fffafd;
+  box-shadow: 0 20px 48px rgba(255, 111, 166, 0.28);
+  padding: 20px;
+  color: #111827;
+}
+
+.trust-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.trust-modal-title {
+  color: #111827;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.trust-modal-subtitle {
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.trust-modal-close {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #ffd2e3;
+  border-radius: 50%;
+  background: #fff;
+  color: #f45c8a;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.trust-current {
+  display: grid;
+  gap: 4px;
+  margin: 16px 0 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #fff0f6;
+  color: #d6336c;
+}
+
+.trust-current strong {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.trust-current span {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.trust-current small {
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.trust-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.trust-tabs button {
+  height: 36px;
+  border: 1px solid #ffd2e3;
+  border-radius: 999px;
+  background: #fff;
+  color: #9ca3af;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.trust-tabs button.active {
+  border-color: #ff8fb1;
+  background: #fff0f6;
+  color: #d6336c;
+}
+
+.trust-guide-list,
+.trust-review-list {
+  display: grid;
+  gap: 8px;
+}
+
+.trust-guide-item {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid #f4d6e4;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.trust-guide-range {
+  color: #d6336c;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.trust-guide-label {
+  color: #111827;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.trust-guide-desc {
+  margin-top: 3px;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.trust-review-item,
+.trust-review-empty {
+  padding: 12px;
+  border: 1px solid #f4d6e4;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.trust-review-empty {
+  color: #9ca3af;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.trust-review-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #111827;
+  font-size: 13px;
+}
+
+.trust-review-top span {
+  color: #d6336c;
+  font-weight: 900;
+}
+
+.trust-review-meta {
+  margin-top: 4px;
+  color: #9ca3af;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.trust-review-item p {
+  margin: 8px 0 0;
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.trust-review-item p.muted {
+  color: #9ca3af;
 }

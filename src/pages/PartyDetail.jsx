@@ -531,7 +531,7 @@ export default function PartyDetail() {
     });
 
     setRatingForms((prev) => ({ ...prev }));
-    alert(`${target.name}님의 유목민 점수에 평가가 반영되었어요.`);
+    alert(`${target.name}님의 동행온도에 평가가 반영되었어요.`);
   };
 
   const openFestivalLinkModal = async () => {
@@ -814,7 +814,7 @@ export default function PartyDetail() {
           <div className="party-comments-header">
             <h2>동행 평가</h2>
             <p className="party-rating-help">
-              파티가 끝난 뒤 함께한 사람을 간단히 평가하면 닉네임 옆 유목민 점수에 반영돼요.
+              파티가 끝난 뒤 함께한 사람을 간단히 평가하면 닉네임 옆 동행온도에 반영돼요.
             </p>
           </div>
 

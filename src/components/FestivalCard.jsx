@@ -6,6 +6,9 @@ export default function FestivalCard({ festival }) {
   const likeCount = festival.like_count ?? festival.likeCount ?? 0;
   const saveCount = festival.save_count ?? festival.saveCount ?? 0;
   const viewCount = festival.view_count ?? festival.viewCount ?? 0;
+  const recommendReasons = Array.isArray(festival.recommendReasons)
+    ? festival.recommendReasons.filter(Boolean).slice(0, 3)
+    : [];
 
   return (
     <Link to={`/detail/${festival.id}`} className="festival-card">
@@ -30,6 +33,14 @@ export default function FestivalCard({ festival }) {
         {festival.badge ? (
           <div className="festival-tags">
             <span className="badge">{festival.badge}</span>
+          </div>
+        ) : null}
+
+        {recommendReasons.length > 0 ? (
+          <div className="festival-reasons" aria-label="추천 이유">
+            {recommendReasons.map((reason) => (
+              <span key={reason}>{reason}</span>
+            ))}
           </div>
         ) : null}
 
