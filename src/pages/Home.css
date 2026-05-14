@@ -19,15 +19,15 @@
 }
 
 .hero-panel-left {
-  background: linear-gradient(135deg, #78d7ff 0%, #8ddfff 100%);
+  background: transparent;
   padding: 34px 28px 30px;
 }
 
 .hero-panel-right {
-  background: linear-gradient(135deg, #effbff 0%, #f8fdff 100%);
+  background: transparent;
   padding: 22px 18px 18px;
-  border: 1px solid rgba(128, 210, 235, 0.2);
-  box-shadow: 0 12px 28px rgba(105, 170, 198, 0.14);
+  border: none;
+  box-shadow: none;
 }
 
 .hero-inner {
@@ -238,8 +238,27 @@
 }
 
 .hero-popular-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  display: flex !important;
+  flex-wrap: nowrap;
   gap: 14px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 8px;
+  scroll-snap-type: x proximity;
+}
+
+.hero-popular-grid::-webkit-scrollbar {
+  height: 8px;
+}
+
+.hero-popular-grid::-webkit-scrollbar-thumb {
+  background: rgba(255, 122, 162, 0.28);
+  border-radius: 999px;
+}
+
+.hero-popular-grid .festival-card {
+  flex: 0 0 240px;
+  scroll-snap-align: start;
 }
 
 .section-personalized .card-row,
@@ -295,7 +314,9 @@
   }
 
   .hero-popular-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    display: flex !important;
+    flex-wrap: nowrap;
+    overflow-x: auto;
   }
 
   .community-grid-three {
@@ -346,7 +367,9 @@
   }
 
   .hero-popular-grid {
-    grid-template-columns: 1fr !important;
+    display: flex !important;
+    flex-wrap: nowrap;
+    overflow-x: auto;
   }
 
   .section-personalized .card-row,
