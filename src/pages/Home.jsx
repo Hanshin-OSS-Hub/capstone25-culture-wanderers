@@ -83,6 +83,7 @@ export default function Home() {
   const [recommendBudget, setRecommendBudget] = useState('');
   const [recommendCompanion, setRecommendCompanion] = useState('');
   const [recommendDate, setRecommendDate] = useState('');
+  const [popularSlideIndex, setPopularSlideIndex] = useState(0);
 
   const previewBenefits = benefits.slice(0, 3);
 
@@ -98,7 +99,7 @@ export default function Home() {
           reviewResponse,
           freeResponse,
         ] = await Promise.all([
-          axios.get(`${API_BASE}/api/festivals/popular?limit=4`),
+          axios.get(`${API_BASE}/api/festivals/popular?limit=9`),
           authFetch('/api/recommend/personalized'),
           authFetch('/api/recommend/preferences'),
           axios.get(`${API_BASE}/api/party-posts`),
@@ -210,6 +211,30 @@ export default function Home() {
 
     return popularFestivals.slice(0, 4);
   }, [isAuthed, personalizedFestivals, popularFestivals]);
+
+  const popularFestivalSlides = useMemo(() => {
+    const slides = [];
+    for (let index = 0; index < popularFestivals.length; index += 3) {
+      slides.push(popularFestivals.slice(index, index + 3));
+    }
+    return slides;
+  }, [popularFestivals]);
+
+  useEffect(() => {
+    if (popularSlideIndex >= popularFestivalSlides.length) {
+      setPopularSlideIndex(0);
+    }
+  }, [popularSlideIndex, popularFestivalSlides.length]);
+
+  const handlePopularPrev = () => {
+    if (popularFestivalSlides.length <= 1) return;
+    setPopularSlideIndex((prev) => (prev - 1 + popularFestivalSlides.length) % popularFestivalSlides.length);
+  };
+
+  const handlePopularNext = () => {
+    if (popularFestivalSlides.length <= 1) return;
+    setPopularSlideIndex((prev) => (prev + 1) % popularFestivalSlides.length);
+  };
 
   const canRecommend =
     Boolean(recommendRegion) ||
@@ -380,18 +405,49 @@ export default function Home() {
                 <div className="section-title">
                   <span>이번 주 인기 축제</span>
                 </div>
-                <Link to="/search" className="link-button">
-                  전체보기 →
-                </Link>
+                <div className="hero-popular-actions">
+                  <button type="button" className="hero-popular-arrow" onClick={handlePopularPrev} aria-label="이전 인기축제">
+                    ←
+                  </button>
+                  <button type="button" className="hero-popular-arrow" onClick={handlePopularNext} aria-label="다음 인기축제">
+                    →
+                  </button>
+                  <Link to="/search" className="link-button">
+                    전체보기 →
+                  </Link>
+                </div>
               </div>
 
-              <div className="card-row hero-popular-grid">
-                {popularFestivals.length > 0 ? (
-                  popularFestivals.slice(0, 4).map((festival) => (
-                    <FestivalCard key={festival.id} festival={festival} />
-                  ))
+              <div className="hero-popular-carousel">
+                {popularFestivalSlides.length > 0 ? (
+                  <div
+                    className="hero-popular-track"
+                    style={{ transform: `translateX(-${popularSlideIndex * 100}%)` }}
+                  >
+                    {popularFestivalSlides.map((slide, slideIndex) => (
+                      <div key={slideIndex} className="hero-popular-slide">
+                        {slide.map((festival) => (
+                          <FestivalCard key={festival.id} festival={festival} />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
                 ) : (
                   <div className="community-empty">표시할 인기 축제가 아직 없어요.</div>
+                )}
+
+                {popularFestivalSlides.length > 1 && (
+                  <div className="hero-popular-dots" aria-label="인기 축제 페이지 선택">
+                    {popularFestivalSlides.map((_, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        className={index === popularSlideIndex ? 'active' : ''}
+                        onClick={() => setPopularSlideIndex(index)}
+                        aria-label={`${index + 1}번째 인기축제 페이지`}
+                      />
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
