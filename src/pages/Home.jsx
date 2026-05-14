@@ -285,89 +285,116 @@ export default function Home() {
 
   return (
     <>
-      <section className="hero">
-        <div className="hero-inner">
-          <h1 className="hero-title">이번 주, 취향에 맞는 문화행사를 골라볼까요?</h1>
-          <p className="hero-subtitle">
-            지역, 예산, 동행, 날짜 중 하나만 골라도 바로 추천 결과로 이어져요.
-          </p>
+      <section className="hero hero-split">
+        <div className="hero-split-grid">
+          <div className="hero-panel hero-panel-left">
+            <div className="hero-inner">
+              <h1 className="hero-title">이번 주, 취향에 맞는 문화행사를 골라볼까요?</h1>
+              <p className="hero-subtitle">
+                지역, 예산, 동행, 날짜 중 하나만 골라도 바로 추천 결과로 이어져요.
+              </p>
 
-          <div className="recommend-box">
-            <div className="recommend-group">
-              <div className="recommend-label">지역</div>
-              <div className="recommend-row">
-                {REGION_OPTIONS.map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    className={recommendRegion === option ? 'active' : ''}
-                    onClick={() => setRecommendRegion((prev) => (prev === option ? '' : option))}
-                  >
-                    {option}
-                  </button>
-                ))}
+              <div className="recommend-box">
+                <div className="recommend-group">
+                  <div className="recommend-label">지역</div>
+                  <div className="recommend-row">
+                    {REGION_OPTIONS.map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        className={recommendRegion === option ? 'active' : ''}
+                        onClick={() => setRecommendRegion((prev) => (prev === option ? '' : option))}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="recommend-group">
+                  <div className="recommend-label">예산</div>
+                  <div className="recommend-row">
+                    {BUDGET_OPTIONS.map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        className={recommendBudget === option ? 'active' : ''}
+                        onClick={() => setRecommendBudget((prev) => (prev === option ? '' : option))}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="recommend-group">
+                  <div className="recommend-label">동행</div>
+                  <div className="recommend-row">
+                    {COMPANION_OPTIONS.map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        className={recommendCompanion === option ? 'active' : ''}
+                        onClick={() =>
+                          setRecommendCompanion((prev) => (prev === option ? '' : option))
+                        }
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="recommend-group recommend-date-group">
+                  <label className="recommend-label" htmlFor="home-recommend-date">
+                    날짜
+                  </label>
+                  <input
+                    id="home-recommend-date"
+                    className="recommend-date-input"
+                    type="date"
+                    value={recommendDate}
+                    onChange={(e) => setRecommendDate(e.target.value)}
+                  />
+                </div>
+
+                <div className="recommend-help">
+                  하나만 골라도 추천받을 수 있어요. 여러 조건을 함께 고르면 더 취향에 가깝게 추천해드려요.
+                </div>
+
+                <button
+                  type="button"
+                  className="recommend-btn"
+                  onClick={handleRecommend}
+                  disabled={!canRecommend}
+                >
+                  추천 받기
+                </button>
               </div>
             </div>
+          </div>
 
-            <div className="recommend-group">
-              <div className="recommend-label">예산</div>
-              <div className="recommend-row">
-                {BUDGET_OPTIONS.map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    className={recommendBudget === option ? 'active' : ''}
-                    onClick={() => setRecommendBudget((prev) => (prev === option ? '' : option))}
-                  >
-                    {option}
-                  </button>
-                ))}
+          <div className="hero-panel hero-panel-right">
+            <div className="section section-popular hero-popular-section">
+              <div className="section-header">
+                <div className="section-title">
+                  <span>이번 주 인기 축제</span>
+                </div>
+                <Link to="/search" className="link-button">
+                  전체보기 →
+                </Link>
+              </div>
+
+              <div className="card-row hero-popular-grid">
+                {popularFestivals.length > 0 ? (
+                  popularFestivals.slice(0, 4).map((festival) => (
+                    <FestivalCard key={festival.id} festival={festival} />
+                  ))
+                ) : (
+                  <div className="community-empty">표시할 인기 축제가 아직 없어요.</div>
+                )}
               </div>
             </div>
-
-            <div className="recommend-group">
-              <div className="recommend-label">동행</div>
-              <div className="recommend-row">
-                {COMPANION_OPTIONS.map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    className={recommendCompanion === option ? 'active' : ''}
-                    onClick={() =>
-                      setRecommendCompanion((prev) => (prev === option ? '' : option))
-                    }
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="recommend-group recommend-date-group">
-              <label className="recommend-label" htmlFor="home-recommend-date">
-                날짜
-              </label>
-              <input
-                id="home-recommend-date"
-                className="recommend-date-input"
-                type="date"
-                value={recommendDate}
-                onChange={(e) => setRecommendDate(e.target.value)}
-              />
-            </div>
-
-            <div className="recommend-help">
-              하나만 골라도 추천받을 수 있어요. 여러 조건을 함께 고르면 더 취향에 가깝게 추천해드려요.
-            </div>
-
-            <button
-              type="button"
-              className="recommend-btn"
-              onClick={handleRecommend}
-              disabled={!canRecommend}
-            >
-              추천 받기
-            </button>
           </div>
         </div>
       </section>
@@ -393,27 +420,6 @@ export default function Home() {
             <div className="community-empty">
               아직 추천할 기록이 충분하지 않아요. 조금만 더 둘러보면 바로 반영할게요.
             </div>
-          )}
-        </div>
-      </section>
-
-      <section className="section section-popular">
-        <div className="section-header">
-          <div className="section-title">
-            <span>이번 주 인기 축제</span>
-          </div>
-          <Link to="/search" className="link-button">
-            전체보기 →
-          </Link>
-        </div>
-
-        <div className="card-row">
-          {popularFestivals.length > 0 ? (
-            popularFestivals.slice(0, 4).map((festival) => (
-              <FestivalCard key={festival.id} festival={festival} />
-            ))
-          ) : (
-            <div className="community-empty">표시할 인기 축제가 아직 없어요.</div>
           )}
         </div>
       </section>
