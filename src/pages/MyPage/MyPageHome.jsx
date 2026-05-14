@@ -59,6 +59,15 @@ const CATEGORY_OPTIONS = [
   "플리마켓",
 ];
 
+const RANK_GUIDE = [
+  { level: 1, emoji: "🐣", title: "구경러", range: "0 ~ 50점" },
+  { level: 2, emoji: "🎫", title: "티켓 소지자", range: "51 ~ 150점" },
+  { level: 3, emoji: "🎠", title: "놀이 시작", range: "151 ~ 300점" },
+  { level: 4, emoji: "🎉", title: "파티 피플", range: "301 ~ 600점" },
+  { level: 5, emoji: "🦁", title: "축제 왕", range: "601 ~ 1000점" },
+  { level: 6, emoji: "👑", title: "축제 마스터", range: "1001점 이상" },
+];
+
 const keepSelectableValues = (values, options) =>
   (Array.isArray(values) ? values : []).filter((value) => options.includes(value));
 
@@ -196,6 +205,7 @@ export default function MyPageHome() {
   );
   const [badgePage, setBadgePage] = useState(0);
   const [rank, setRank] = useState(null);
+  const [showRankGuide, setShowRankGuide] = useState(false);
 
   useEffect(() => {
     const safeCount = (result) => {
@@ -546,17 +556,23 @@ export default function MyPageHome() {
 
         {/* 등급 정보 카드 */}
         {rank && (
-          <div className="mypage-rank-card">
+          <button
+            type="button"
+            className="mypage-rank-card"
+            onClick={() => setShowRankGuide(true)}
+            aria-label="활동등급표 보기"
+          >
             <div className="rank-badge">
               <div className="rank-emoji">{rank.rankEmoji}</div>
               <div className="rank-info">
+                <div className="rank-kind">활동등급</div>
                 <div className="rank-title">{rank.rankTitle}</div>
                 <div className="rank-level">Lv.{rank.level}</div>
               </div>
             </div>
             <div className="rank-details">
               <div className="points-display">
-                <span className="points-label">신뢰 점수</span>
+                <span className="points-label">활동 점수</span>
                 <span className="points-value">{rank.points?.toFixed(1) || 0}점</span>
               </div>
               {rank.nextRankTitle && (
@@ -572,6 +588,46 @@ export default function MyPageHome() {
                     ></div>
                   </div>
                 </div>
+              )}
+            </div>
+            <div className="rank-card-hint">눌러서 등급표 보기</div>
+          </button>
+        )}
+
+        {showRankGuide && rank && (
+          <div className="rank-guide-backdrop" onClick={() => setShowRankGuide(false)}>
+            <div className="rank-guide-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+              <div className="rank-guide-header">
+                <div>
+                  <div className="rank-guide-title">활동등급표</div>
+                  <div className="rank-guide-subtitle">리뷰, 댓글, 파티 활동이 쌓이면 등급이 올라가요.</div>
+                </div>
+                <button type="button" className="rank-guide-close" onClick={() => setShowRankGuide(false)} aria-label="닫기">
+                  ×
+                </button>
+              </div>
+              <div className="rank-guide-current">
+                현재 활동등급 {rank.rankTitle} Lv.{rank.level} · {rank.points?.toFixed(1) || 0}점
+              </div>
+              <div className="rank-guide-list">
+                {RANK_GUIDE.map((item) => (
+                  <div
+                    key={item.level}
+                    className={`rank-guide-item ${Number(rank.level) === item.level ? "current" : ""}`}
+                  >
+                    <span className="rank-guide-emoji">{item.emoji}</span>
+                    <span className="rank-guide-name">{item.title}</span>
+                    <span className="rank-guide-level">Lv.{item.level}</span>
+                    <span className="rank-guide-range">{item.range}</span>
+                  </div>
+                ))}
+              </div>
+              {rank.nextRankTitle ? (
+                <div className="rank-guide-next">
+                  다음 등급 {rank.nextRankTitle}까지 {(rank.nextRankMin - rank.points).toFixed(1)}점 남았어요.
+                </div>
+              ) : (
+                <div className="rank-guide-next">최고 등급을 달성했어요.</div>
               )}
             </div>
           </div>
@@ -1195,4 +1251,3 @@ export default function MyPageHome() {
     </section>
   );
 }
-

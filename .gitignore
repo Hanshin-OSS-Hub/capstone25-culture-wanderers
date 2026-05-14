@@ -36,3 +36,11 @@ dist-ssr
 *.sql
 db/
 주차 보고서 1-10주차/
+
+.env
+.env.local
+*.env
+.zip_run_0508/
+.zip_verify_0510/
+.zip_run_0508/
+.zip_verify_0510/

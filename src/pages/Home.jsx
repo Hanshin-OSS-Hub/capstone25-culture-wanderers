@@ -50,6 +50,9 @@ const formatPlace = (regionValue, locationValue) => {
 const normalizeFestivalCard = (item, badge) => ({
   id: item.id,
   title: item.title,
+  region: item.region,
+  category: item.category ?? item.contentType,
+  price: item.price,
   period: `${formatDate(item.startDate ?? item.start_date)} - ${formatDate(item.endDate ?? item.end_date)}`,
   place: formatPlace(item.region, item.location),
   thumbnail_url: item.thumbnailUrl ?? item.thumbnail_url ?? '',
@@ -58,6 +61,38 @@ const normalizeFestivalCard = (item, badge) => ({
   like_count: item.likeCount ?? item.like_count ?? 0,
   view_count: item.viewCount ?? item.view_count ?? 0,
 });
+
+const buildHomeRecommendReasons = (festival, preferenceSummary, isAuthed) => {
+  const reasons = [];
+  const region = String(festival.region || festival.place || '');
+  const category = String(festival.category || '');
+  const price = String(festival.price || '');
+  const selectedRegions = [
+    preferenceSummary?.topRegion,
+    ...(Array.isArray(preferenceSummary?.selectedRegions) ? preferenceSummary.selectedRegions : []),
+  ].filter(Boolean);
+  const selectedCategories = [
+    preferenceSummary?.topCategory,
+    ...(Array.isArray(preferenceSummary?.selectedCategories) ? preferenceSummary.selectedCategories : []),
+  ].filter(Boolean);
+
+  if (isAuthed) {
+    const matchedRegion = selectedRegions.find((item) => region.includes(item));
+    const matchedCategory = selectedCategories.find((item) => category.includes(item));
+    if (matchedRegion) reasons.push(`관심 지역 ${matchedRegion}`);
+    if (matchedCategory) reasons.push(`선호 장르 ${matchedCategory}`);
+    if ((festival.like_count || 0) > 0 || (festival.reviews || 0) > 0) reasons.push('반응 있는 행사');
+    if (price.includes('무료')) reasons.push('무료 관람 가능');
+    if (reasons.length === 0) reasons.push('최근 활동 기반 추천');
+  } else {
+    if (festival.badge) reasons.push(festival.badge);
+    if ((festival.view_count || 0) > 0) reasons.push('조회 많은 행사');
+    if ((festival.like_count || 0) > 0) reasons.push('좋아요 받은 행사');
+    if (reasons.length === 0) reasons.push('인기 행사');
+  }
+
+  return [...new Set(reasons)].slice(0, 3);
+};
 
 const normalizePartyMeta = (item) =>
   [
@@ -205,12 +240,17 @@ export default function Home() {
   }, [isAuthed, preferenceSummary]);
 
   const homeRecommendationFestivals = useMemo(() => {
+    const attachReasons = (festival) => ({
+      ...festival,
+      recommendReasons: buildHomeRecommendReasons(festival, preferenceSummary, isAuthed),
+    });
+
     if (isAuthed && personalizedFestivals.length > 0) {
-      return personalizedFestivals.slice(0, 4);
+      return personalizedFestivals.slice(0, 4).map(attachReasons);
     }
 
-    return popularFestivals.slice(0, 4);
-  }, [isAuthed, personalizedFestivals, popularFestivals]);
+    return popularFestivals.slice(0, 4).map(attachReasons);
+  }, [isAuthed, personalizedFestivals, popularFestivals, preferenceSummary]);
 
   const popularFestivalSlides = useMemo(() => {
     const slides = [];

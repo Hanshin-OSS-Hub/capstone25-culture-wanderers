@@ -373,6 +373,9 @@ const Search = () => {
     if ((item.party_count ?? 0) > 0) reasonParts.push('함께 갈 사람을 찾을 수 있는 파티가 있어요');
     if (tab === TAB_ENDING_SOON) reasonParts.push('곧 종료되는 행사라 이번 기회에 보기 좋아요');
     if (status === STATUS_PAST) reasonParts.push('이미 종료된 행사 기록이에요');
+    if (personalized && reasonParts.length === 0) reasonParts.push('최근 활동과 관심사를 바탕으로 추천했어요');
+    if (!personalized && reasonParts.length === 0) reasonParts.push('조건과 인기도를 함께 반영했어요');
+    return `추천 이유: ${[...new Set(reasonParts)].slice(0, 2).join(' · ')}`;
   };
 
   const buildFeatureBadges = (item) => {
