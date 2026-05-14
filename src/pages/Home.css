@@ -230,35 +230,79 @@
   padding: 2px 4px 6px;
 }
 
+.hero-popular-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hero-popular-arrow {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 122, 162, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #ff5c8a;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+}
+
+.hero-popular-arrow:hover {
+  background: #fff5f8;
+}
+
+.hero-popular-carousel {
+  overflow: hidden;
+  min-height: 420px;
+}
+
+.hero-popular-track {
+  display: flex;
+  width: 100%;
+  transition: transform 0.35s ease;
+}
+
+.hero-popular-slide {
+  flex: 0 0 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.hero-popular-slide .festival-card {
+  min-width: 0;
+  width: 100%;
+}
+
+.hero-popular-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.hero-popular-dots button {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 122, 162, 0.24);
+  cursor: pointer;
+}
+
+.hero-popular-dots button.active {
+  width: 20px;
+  background: #ff5c8a;
+}
+
 .personalized-reason {
   margin: -6px 0 16px;
   color: #666;
   font-size: 14px;
   line-height: 1.6;
-}
-
-.hero-popular-grid {
-  display: flex !important;
-  flex-wrap: nowrap;
-  gap: 14px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 8px;
-  scroll-snap-type: x proximity;
-}
-
-.hero-popular-grid::-webkit-scrollbar {
-  height: 8px;
-}
-
-.hero-popular-grid::-webkit-scrollbar-thumb {
-  background: rgba(255, 122, 162, 0.28);
-  border-radius: 999px;
-}
-
-.hero-popular-grid .festival-card {
-  flex: 0 0 240px;
-  scroll-snap-align: start;
 }
 
 .section-personalized .card-row,
@@ -313,12 +357,6 @@
     border-radius: 24px;
   }
 
-  .hero-popular-grid {
-    display: flex !important;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-  }
-
   .community-grid-three {
     grid-template-columns: 1fr;
   }
@@ -366,14 +404,28 @@
     max-width: 100%;
   }
 
-  .hero-popular-grid {
-    display: flex !important;
-    flex-wrap: nowrap;
-    overflow-x: auto;
+  .hero-popular-slide {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .section-personalized .card-row,
   .section-popular .card-row {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-popular-slide {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-popular-actions {
+    gap: 6px;
+  }
+
+  .hero-popular-arrow {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
   }
 }
