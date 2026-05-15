@@ -396,6 +396,13 @@ export default function Layout({ children }) {
           <Link to="/">문화유목민</Link>
         </div>
 
+        <nav className="header-nav">
+          <Link to="/search">축제 검색</Link>
+          <Link to="/party">파티 모집</Link>
+          <Link to="/community">커뮤니티</Link>
+          <Link to="/benefits">할인정보 모아보기</Link>
+        </nav>
+
         <form className="header-search" onSubmit={onSubmitSearch}>
           <input
             value={q}
@@ -404,7 +411,7 @@ export default function Layout({ children }) {
           />
         </form>
 
-        <nav className="header-nav">
+        <div className="header-actions">
           {currentUser ? (
             <div className="header-notification" ref={notificationRef}>
               <button
@@ -431,12 +438,8 @@ export default function Layout({ children }) {
             </div>
           ) : null}
 
-          <Link to="/search">축제 검색</Link>
-          <Link to="/party">파티 모집</Link>
-          <Link to="/community">커뮤니티</Link>
-          <Link to="/benefits">할인정보 모아보기</Link>
           {currentUser ? <Link to="/mypage">마이페이지</Link> : <Link to="/login">로그인</Link>}
-        </nav>
+        </div>
       </header>
 
       <main className="app-main">{children}</main>

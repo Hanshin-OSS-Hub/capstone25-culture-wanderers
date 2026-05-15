@@ -823,7 +823,8 @@ export default function AiChatWidget() {
         aria-label="AI 추천 도우미"
         title="AI 추천 도우미"
       >
-        AI
+        <span className="ai-chat-fab-mark">AI</span>
+        <span className="ai-chat-fab-text">문화 추천</span>
       </button>
 
       {isOpen && (
