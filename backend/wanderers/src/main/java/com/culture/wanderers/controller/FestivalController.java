@@ -74,17 +74,29 @@ public class FestivalController {
             }
 
             if (q != null && !q.isBlank()) {
-                String keyword = q.trim().toLowerCase();
-                String normalizedKeyword = normalizeRegionKeyword(keyword).toLowerCase();
+                List<Predicate> keywordPredicates = new ArrayList<>();
+                for (String rawToken : q.trim().toLowerCase().split("\\s+")) {
+                    String keyword = rawToken.trim();
+                    if (keyword.isBlank()) {
+                        continue;
+                    }
 
-                predicates.add(cb.or(
-                        cb.like(cb.lower(root.get("title")), "%" + keyword + "%"),
-                        cb.like(cb.lower(root.get("location")), "%" + keyword + "%"),
-                        cb.like(cb.lower(root.get("region")), "%" + keyword + "%"),
-                        cb.like(cb.lower(root.get("title")), "%" + normalizedKeyword + "%"),
-                        cb.like(cb.lower(root.get("location")), "%" + normalizedKeyword + "%"),
-                        cb.like(cb.lower(root.get("region")), "%" + normalizedKeyword + "%")
-                ));
+                    String normalizedKeyword = normalizeRegionKeyword(keyword).toLowerCase();
+                    keywordPredicates.add(cb.or(
+                            cb.like(cb.lower(root.get("title")), "%" + keyword + "%"),
+                            cb.like(cb.lower(root.get("location")), "%" + keyword + "%"),
+                            cb.like(cb.lower(root.get("region")), "%" + keyword + "%"),
+                            cb.like(cb.lower(root.get("category")), "%" + keyword + "%"),
+                            cb.like(cb.lower(root.get("title")), "%" + normalizedKeyword + "%"),
+                            cb.like(cb.lower(root.get("location")), "%" + normalizedKeyword + "%"),
+                            cb.like(cb.lower(root.get("region")), "%" + normalizedKeyword + "%"),
+                            cb.like(cb.lower(root.get("category")), "%" + normalizedKeyword + "%")
+                    ));
+                }
+
+                if (!keywordPredicates.isEmpty()) {
+                    predicates.add(cb.and(keywordPredicates.toArray(new Predicate[0])));
+                }
             }
 
             if (date != null && !date.isBlank()) {

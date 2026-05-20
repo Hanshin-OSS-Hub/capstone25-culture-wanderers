@@ -108,6 +108,19 @@ const normalizeDedupeText = (value) =>
     .replace(/\s+/g, '')
     .replace(/[^0-9a-z가-힣]/g, '');
 
+const normalizeSearchText = (value) =>
+  String(value || '')
+    .toLowerCase()
+    .replace(/[^0-9a-z가-힣\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const getSearchTokens = (value) =>
+  normalizeSearchText(value)
+    .split(' ')
+    .map((token) => token.trim())
+    .filter(Boolean);
+
 const getFestivalDedupeKey = (festival) => {
   const title = normalizeDedupeText(festival.title);
   const startDate = normalizeDedupeText(festival.start_date);
@@ -300,20 +313,21 @@ const Search = () => {
   const displayedFestivals = useMemo(() => {
     const today = todayDate();
     const twoWeeksLater = addDays(today, 14);
-    const keyword = q.trim().toLowerCase();
+    const keywordTokens = getSearchTokens(q);
 
     let next = dedupeFestivals(festivals).filter((item) => {
       const title = String(item.title || '').toLowerCase();
       const location = String(item.location || '').toLowerCase();
       const regionText = String(item.region || '').toLowerCase();
       const categoryText = String(item.category || '').toLowerCase();
+      const searchText = normalizeSearchText(`${title} ${location} ${regionText} ${categoryText}`);
       const start = parseFestivalDate(item.start_date);
       const end = parseFestivalDate(item.end_date);
       const itemPrice = getPriceNumber(item.price);
 
       if (selectedRegion !== REGION_ALL && !String(item.region || '').includes(selectedRegion)) return false;
       if (selectedCategory !== CATEGORY_ALL && !categoryText.includes(String(selectedCategory).toLowerCase())) return false;
-      if (keyword && !`${title} ${location} ${regionText}`.includes(keyword)) return false;
+      if (keywordTokens.length > 0 && !keywordTokens.every((token) => searchText.includes(token))) return false;
       if (selectedDate) {
         const target = parseFestivalDate(selectedDate);
         if (target && start && end) {
@@ -364,8 +378,11 @@ const Search = () => {
     if (q) {
       const title = String(item.title || '').toLowerCase();
       const location = String(item.location || '').toLowerCase();
-      const keyword = String(q).toLowerCase();
-      if (title.includes(keyword) || location.includes(keyword)) {
+      const regionText = String(item.region || '').toLowerCase();
+      const categoryText = String(item.category || item.contentType || '').toLowerCase();
+      const keywordTokens = getSearchTokens(q);
+      const searchText = normalizeSearchText(`${title} ${location} ${regionText} ${categoryText}`);
+      if (keywordTokens.length > 0 && keywordTokens.every((token) => searchText.includes(token))) {
         reasonParts.push('검색어와 잘 맞는 행사예요');
       }
     }

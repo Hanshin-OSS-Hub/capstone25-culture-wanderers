@@ -14,10 +14,10 @@ import './Home.css';
 const API_BASE = 'http://localhost:8080';
 
 const HERO_TAGS = [
-  { label: '# 성수놀거리', query: '성수' },
-  { label: '# 종로전시', query: '종로 전시' },
-  { label: '# 서울공연', query: '서울 공연' },
-  { label: '# 주말축제', query: '축제' },
+  { label: '# 성수놀거리', params: { q: '성수' } },
+  { label: '# 종로전시', params: { q: '종로', region: '서울', category: '전시' } },
+  { label: '# 서울공연', params: { region: '서울', category: '공연' } },
+  { label: '# 주말축제', params: { category: '축제' } },
 ];
 
 const HERO_SHORTCUTS = [
@@ -315,9 +315,10 @@ export default function Home() {
     navigate(`/result?${params.toString()}`);
   };
 
-  const openHeroTag = (query) => {
+  const openHeroTag = (tagParams) => {
+    const query = tagParams.q || '';
     setHeroQuery(query);
-    const params = new URLSearchParams({ q: query });
+    const params = new URLSearchParams(tagParams);
     navigate(`/result?${params.toString()}`);
   };
 
@@ -388,7 +389,7 @@ export default function Home() {
 
               <div className="hero-tag-row">
                 {HERO_TAGS.map((tag) => (
-                  <button key={tag.label} type="button" onClick={() => openHeroTag(tag.query)}>
+                  <button key={tag.label} type="button" onClick={() => openHeroTag(tag.params)}>
                     {tag.label}
                   </button>
                 ))}

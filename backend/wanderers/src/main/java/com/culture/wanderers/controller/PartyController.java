@@ -102,7 +102,7 @@ public class PartyController {
     ) {
         String email = extractEmail(authHeader);
 
-        List<PartyMember> members = partyMemberRepository.findByUserEmailAndStatus(email, "APPROVED");
+        List<PartyMember> members = partyMemberRepository.findLinkedByUserEmailAndStatus(email, "APPROVED");
         List<Party> parties = members.stream().map(PartyMember::getParty).toList();
         parties.forEach(this::attachPartyMetadata);
         return parties;
@@ -374,7 +374,7 @@ public class PartyController {
                 .filter(this::isPartyReviewOpen)
                 .forEach(party -> reviewTargets.put(party.getId(), party));
 
-        partyMemberRepository.findByUserEmailAndStatus(email, "APPROVED").stream()
+        partyMemberRepository.findLinkedByUserEmailAndStatus(email, "APPROVED").stream()
                 .map(PartyMember::getParty)
                 .filter(this::isPartyReviewOpen)
                 .forEach(party -> reviewTargets.putIfAbsent(party.getId(), party));

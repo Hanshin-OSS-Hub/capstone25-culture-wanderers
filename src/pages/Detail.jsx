@@ -115,8 +115,8 @@ export default function Detail() {
 
   const getDefaultVisitDate = useCallback((festivalData) => {
     const today = getTodayDate();
-    const start = toInputDate(festivalData?.start_date);
-    const end = toInputDate(festivalData?.end_date);
+    const start = toInputDate(festivalData?.start_date || festivalData?.startDate);
+    const end = toInputDate(festivalData?.end_date || festivalData?.endDate);
 
     if (start && end) {
       if (today >= start && today <= end) return today;
@@ -480,9 +480,13 @@ export default function Detail() {
     return '공식정보를 확인하세요';
   };
 
+  const festivalStartDate = festival.start_date || festival.startDate;
+  const festivalEndDate = festival.end_date || festival.endDate;
+  const festivalHomepageUrl = festival.homepage_url || festival.homepageUrl;
+
   const displayDate = () => {
-    const start = formatDate(festival.start_date);
-    const end = formatDate(festival.end_date);
+    const start = formatDate(festivalStartDate);
+    const end = formatDate(festivalEndDate);
     if (start === '공식정보를 확인하세요' || end === '공식정보를 확인하세요') {
       return '공식정보를 확인하세요';
     }
@@ -711,8 +715,8 @@ export default function Detail() {
         location: festival.location || '',
         description: festival.description || '',
         festivalPeriod: displayDate(),
-        festivalStartDate: toInputDate(festival.start_date),
-        festivalEndDate: toInputDate(festival.end_date),
+        festivalStartDate: toInputDate(festivalStartDate),
+        festivalEndDate: toInputDate(festivalEndDate),
         festivalId: festival.id,
         visitedCandidate: true,
         verifiedVisit: false,
@@ -952,8 +956,8 @@ export default function Detail() {
                 type="date"
                 value={visitDate}
                 onChange={(e) => setVisitDate(e.target.value)}
-                min={toInputDate(festival.start_date) || undefined}
-                max={toInputDate(festival.end_date) || undefined}
+                min={toInputDate(festivalStartDate) || undefined}
+                max={toInputDate(festivalEndDate) || undefined}
                 style={{
                   height: '40px',
                   borderRadius: '10px',
@@ -1001,10 +1005,10 @@ export default function Detail() {
             </div>
 
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              {festival.homepage_url ? (
+              {festivalHomepageUrl ? (
                 <button
                   className="detail-reserve-btn"
-                  onClick={() => window.open(festival.homepage_url, '_blank', 'noopener,noreferrer')}
+                  onClick={() => window.open(festivalHomepageUrl, '_blank', 'noopener,noreferrer')}
                 >
                   공식 홈페이지
                 </button>
